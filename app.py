@@ -336,10 +336,38 @@ st.markdown("""
 st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
 
 if not st.session_state.logged_in:
+    # 상단 버튼으로 로그인/회원가입 전환
+    if "auth_mode" not in st.session_state:
+        st.session_state.auth_mode = "login"
+
     col_l, col_c, col_r = st.columns([1.0, 1.2, 1.0])
     with col_c:
-        tab_login, tab_register = st.tabs(["🔐 로그인", "📝 회원가입"])
-        with tab_login:
+        # 상단 큰 버튼
+        btn_a, btn_b = st.columns(2)
+        with btn_a:
+            st.markdown(
+                f"<button onclick='' style='width:100%;padding:14px;font-size:1rem;font-weight:800;border-radius:8px;border:none;cursor:pointer;"
+                f"background:{'#0095ff' if st.session_state.auth_mode == 'login' else '#1a2333'};"
+                f"color:#ffffff;letter-spacing:1px;'>🔐 로그인</button>",
+                unsafe_allow_html=True
+            )
+            if st.button("로그인", key="mode_login", use_container_width=True):
+                st.session_state.auth_mode = "login"
+                st.rerun()
+        with btn_b:
+            st.markdown(
+                f"<button onclick='' style='width:100%;padding:14px;font-size:1rem;font-weight:800;border-radius:8px;border:none;cursor:pointer;"
+                f"background:{'#0095ff' if st.session_state.auth_mode == 'register' else '#1a2333'};"
+                f"color:#ffffff;letter-spacing:1px;'>📝 회원가입</button>",
+                unsafe_allow_html=True
+            )
+            if st.button("회원가입", key="mode_register", use_container_width=True):
+                st.session_state.auth_mode = "register"
+                st.rerun()
+
+        st.write("")
+
+        if st.session_state.auth_mode == "login":
             with st.container(border=True):
                 input_id = st.text_input("ID", placeholder="길드원 계정명 입력", key="login_id")
                 input_pw = st.text_input("PASSWORD", type="password", placeholder="비밀번호 입력", key="login_pw")
@@ -365,7 +393,7 @@ if not st.session_state.logged_in:
                     st.session_state.logged_in = True
                     st.session_state.login_user = "마스터"
                     st.rerun()
-        with tab_register:
+        else:
             with st.container(border=True):
                 reg_id = st.text_input("인게임 닉네임", key="reg_id")
                 reg_pw = st.text_input("새 비밀번호", type="password", key="reg_pw")
