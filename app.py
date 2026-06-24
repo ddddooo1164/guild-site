@@ -343,23 +343,22 @@ if not st.session_state.logged_in:
     col_l, col_c, col_r = st.columns([1.0, 1.2, 1.0])
     with col_c:
         # 상단 큰 버튼
+        # 선택된 탭 색상 동적 주입
+        login_bg = "#0095ff" if st.session_state.auth_mode == "login" else "#1a2333"
+        reg_bg = "#0095ff" if st.session_state.auth_mode == "register" else "#1a2333"
+        st.markdown(f"<style>.auth-btn-login button{{background:{login_bg} !important;color:#fff !important;border:none !important;font-size:1rem !important;font-weight:800 !important;padding:14px !important;}}.auth-btn-register button{{background:{reg_bg} !important;color:#fff !important;border:none !important;font-size:1rem !important;font-weight:800 !important;padding:14px !important;}}</style>", unsafe_allow_html=True)
         btn_a, btn_b = st.columns(2)
         with btn_a:
-            login_bg = "#0095ff" if st.session_state.auth_mode == "login" else "#1a2333"
-            st.markdown(f"<style>div[data-testid='stButton'] button[kind='secondary']{{}} </style>", unsafe_allow_html=True)
-            st.markdown(f"<div style='margin-bottom:-8px;'>", unsafe_allow_html=True)
+            st.markdown("<div class='auth-btn-login'>", unsafe_allow_html=True)
             if st.button("🔐 로그인", key="mode_login", use_container_width=True):
                 st.session_state.auth_mode = "login"
                 st.rerun()
-            st.markdown(f"<style> div[data-testid='stButton']:nth-of-type(1) button {{ background:{login_bg} !important; color:#fff !important; border:none !important; font-size:1rem !important; font-weight:800 !important; padding:14px !important; }} </style>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
         with btn_b:
-            reg_bg = "#0095ff" if st.session_state.auth_mode == "register" else "#1a2333"
-            st.markdown(f"<div style='margin-bottom:-8px;'>", unsafe_allow_html=True)
+            st.markdown("<div class='auth-btn-register'>", unsafe_allow_html=True)
             if st.button("📝 회원가입", key="mode_register", use_container_width=True):
                 st.session_state.auth_mode = "register"
                 st.rerun()
-            st.markdown(f"<style> div[data-testid='stButton']:nth-of-type(2) button {{ background:{reg_bg} !important; color:#fff !important; border:none !important; font-size:1rem !important; font-weight:800 !important; padding:14px !important; }} </style>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         st.write("")
