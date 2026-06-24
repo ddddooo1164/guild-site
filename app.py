@@ -561,11 +561,56 @@ else:
         with st.container(border=True):
             st.markdown("<div class='section-title'>📋 길드원 리스트 스펙 현황</div>", unsafe_allow_html=True)
             table_rows = []
-            # 전투력 높은 순으로 정렬
+            # 정렬 상태 초기화
+            if "sort_col" not in st.session_state:
+                st.session_state.sort_col = "power"
+                st.session_state.sort_asc = False
+
+            def sort_members(col):
+                if st.session_state.sort_col == col:
+                    st.session_state.sort_asc = not st.session_state.sort_asc
+                else:
+                    st.session_state.sort_col = col
+                    st.session_state.sort_asc = False
+
+            def get_sort_arrow(col):
+                if st.session_state.sort_col == col:
+                    return " ▲" if st.session_state.sort_asc else " ▼"
+                return " ⇅"
+
+            # 정렬 버튼 한 줄
+            sc1,sc2,sc3,sc4,sc5,sc6 = st.columns(6)
+            with sc1:
+                if st.button(f"직업{get_sort_arrow('job')}", key="sort_job", use_container_width=True):
+                    sort_members("job"); st.rerun()
+            with sc2:
+                if st.button(f"공격{get_sort_arrow('atk')}", key="sort_atk", use_container_width=True):
+                    sort_members("atk"); st.rerun()
+            with sc3:
+                if st.button(f"방어{get_sort_arrow('def')}", key="sort_def", use_container_width=True):
+                    sort_members("def"); st.rerun()
+            with sc4:
+                if st.button(f"명중{get_sort_arrow('hit')}", key="sort_hit", use_container_width=True):
+                    sort_members("hit"); st.rerun()
+            with sc5:
+                if st.button(f"총합{get_sort_arrow('power')}", key="sort_power", use_container_width=True):
+                    sort_members("power"); st.rerun()
+            with sc6:
+                if st.button(f"갱신{get_sort_arrow('updated_at')}", key="sort_time", use_container_width=True):
+                    sort_members("updated_at"); st.rerun()
+
+            # 정렬 적용
+            def get_sort_val(item):
+                val = item[1].get(st.session_state.sort_col, '')
+                if st.session_state.sort_col in ['atk','def','hit','power','gold']:
+                    try: return int(val)
+                    except: return 0
+                return str(val)
+
             sorted_members = sorted(
                 st.session_state.db_data["guildmembers"].items(),
-                key=lambda x: int(x[1].get('power', 0)),
-                reverse=True
+                key=get_sort_val,
+                reverse=not st.session_state.sort_asc
             )
             crown_icons = {0: "👑", 1: "🥈", 2: "🥉"}
             for rank, (name, m_data) in enumerate(sorted_members):
