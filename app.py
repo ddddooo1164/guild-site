@@ -31,11 +31,17 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 def load_sheet_data(sheet_name):
-    url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
     try:
-        df = pd.read_csv(url)
-        df.columns = [str(c).strip().lower() for c in df.columns]
-        df = df.dropna(how='all', axis=0)
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        ws = sh.worksheet(sheet_name)
+        all_values = ws.get_all_values()
+        if not all_values or len(all_values) < 2:
+            return pd.DataFrame()
+        headers = [str(h).strip().lower() for h in all_values[0]]
+        rows = all_values[1:]
+        df = pd.DataFrame(rows, columns=headers)
+        df = df.replace('', pd.NA).dropna(how='all', axis=0).fillna('')
         return df
     except Exception as e:
         st.error(f"시트 로드 실패 ({sheet_name}): {e}")
