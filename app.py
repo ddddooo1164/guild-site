@@ -374,6 +374,38 @@ else:
         with st.container(border=True):
             st.markdown("<div class='section-title'>👤 계정 정보</div>", unsafe_allow_html=True)
             st.write(f"현재 접속: **{current_user}** 님")
+            if st.button("✏️ 닉네임 변경", use_container_width=True):
+                st.session_state.show_nick_editor = not st.session_state.get("show_nick_editor", False)
+            if st.session_state.get("show_nick_editor", False):
+                st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:12px;margin-top:4px;'>", unsafe_allow_html=True)
+                new_nick = st.text_input("새 닉네임 입력", key="new_nick_input")
+                if st.button("✅ 변경 완료", use_container_width=True):
+                    if new_nick.strip() == "":
+                        st.error("닉네임을 입력해주세요!")
+                    elif new_nick.strip() in st.session_state.db_data["guildmembers"]:
+                        st.error("이미 사용중인 닉네임이에요!")
+                    else:
+                        # 기존 데이터 복사 후 새 닉네임으로 저장
+                        old_data = st.session_state.db_data["guildmembers"][current_user]
+                        st.session_state.db_data["guildmembers"][new_nick.strip()] = old_data
+                        del st.session_state.db_data["guildmembers"][current_user]
+                        # 시트에 새 닉네임으로 저장, 기존 닉네임 삭제
+                        save_member_to_sheet(new_nick.strip(), old_data)
+                        try:
+                            client = get_gspread_client()
+                            sh = client.open_by_key(SHEET_ID)
+                            ws = sh.worksheet("guildmembers")
+                            cell = ws.find(current_user)
+                            if cell:
+                                ws.delete_rows(cell.row)
+                        except Exception as e:
+                            st.error(f"기존 닉네임 삭제 실패: {e}")
+                        st.session_state.login_user = new_nick.strip()
+                        controller.set('saved_user_id', new_nick.strip())
+                        st.session_state.show_nick_editor = False
+                        st.success(f"✅ 닉네임이 {new_nick.strip()} 으로 변경됐어요!")
+                        st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
             if st.button("LOGOUT", use_container_width=True):
                 st.session_state.logged_in = False
                 st.session_state.login_user = ""
