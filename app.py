@@ -48,6 +48,11 @@ def save_member_to_sheet(name, member_data):
         ws = sh.worksheet("guildmembers")
         all_values = ws.get_all_values()
         headers = [h.strip().lower() for h in all_values[0]]
+        # job 컬럼 없으면 자동 추가
+        if 'job' not in headers:
+            next_col = len(headers) + 1
+            ws.update_cell(1, next_col, 'job')
+            headers.append('job')
         new_row_data = {
             'name': name,
             'password': member_data.get('password', ''),
@@ -56,6 +61,7 @@ def save_member_to_sheet(name, member_data):
             'def': member_data.get('def', 0),
             'hit': member_data.get('hit', 0),
             'power': member_data.get('power', 0),
+            'job': member_data.get('job', '-'),
             'updated_at': member_data.get('updated_at', ''),
             'boss_le': member_data['attendance'].get('레기카', False),
             'boss_si': member_data['attendance'].get('시온', False),
@@ -162,7 +168,8 @@ def convert_sheets_to_dict(members_df, finance_df):
                 "atk": int(pd.to_numeric(row.get('atk', 0), errors='coerce') or 0),
                 "def": int(pd.to_numeric(row.get('def', 0), errors='coerce') or 0),
                 "hit": int(pd.to_numeric(row.get('hit', 0), errors='coerce') or 0),
-                "power": int(pd.to_numeric(row.get('power', 0), errors='coerce') or 0),
+                "power": int(pd.to_numeric(row.get('power', 0), errors='coerce') or 0) if pd.notna(pd.to_numeric(row.get('power', 0), errors='coerce')) else 0,
+                "job": str(row.get('job', '-')) if str(row.get('job', '-')) not in ['nan', ''] else '-',
                 "updated_at": str(row.get('updated_at', '-')),
                 "attendance": {
                     "레기카": str(row.get('boss_le', 'FALSE')).upper() == 'TRUE',
@@ -353,7 +360,8 @@ if not st.session_state.logged_in:
                         new_member = {
                             "password":reg_pw,"gold":0,"atk":0,"def":0,"hit":0,"power":0,
                             "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
-                            "attendance":{"레기카":False,"시온":False,"플라우드":False}
+                            "attendance":{"레기카":False,"시온":False,"플라우드":False},
+                            "job":"-"
                         }
                         st.session_state.db_data["guildmembers"][reg_id] = new_member
                         if save_member_to_sheet(reg_id, new_member):
@@ -373,8 +381,26 @@ else:
     with col_left:
         with st.container(border=True):
             st.markdown(f"<div class='section-title'>👤 현재 <span style='color:#38bdf8;'>{current_user}</span> 님의 정보</div>", unsafe_allow_html=True)
-            if st.button("✏️ 닉네임 변경", use_container_width=True):
-                st.session_state.show_nick_editor = not st.session_state.get("show_nick_editor", False)
+            btn1, btn2, btn3 = st.columns(3)
+            with btn1:
+                if st.button("✏️ 닉네임", use_container_width=True):
+                    st.session_state.show_nick_editor = not st.session_state.get("show_nick_editor", False)
+            with btn2:
+                if st.button("🚪 로그아웃", use_container_width=True):
+                    st.session_state.logged_in = False
+                    st.session_state.login_user = ""
+                    try:
+                        controller.remove('saved_user_id')
+                    except:
+                        pass
+                    st.rerun()
+            with btn3:
+                if st.button("🔄 새로고침", use_container_width=True):
+                    m_df = load_sheet_data("guildmembers")
+                    f_df = load_sheet_data("guild_finance")
+                    st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
+                    st.session_state.auction_items = load_auction_from_sheet()
+                    st.rerun()
             if st.session_state.get("show_nick_editor", False):
                 st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:12px;margin-top:4px;'>", unsafe_allow_html=True)
                 new_nick = st.text_input("새 닉네임 입력", key="new_nick_input")
@@ -384,11 +410,9 @@ else:
                     elif new_nick.strip() in st.session_state.db_data["guildmembers"]:
                         st.error("이미 사용중인 닉네임이에요!")
                     else:
-                        # 기존 데이터 복사 후 새 닉네임으로 저장
                         old_data = st.session_state.db_data["guildmembers"][current_user]
                         st.session_state.db_data["guildmembers"][new_nick.strip()] = old_data
                         del st.session_state.db_data["guildmembers"][current_user]
-                        # 시트에 새 닉네임으로 저장, 기존 닉네임 삭제
                         save_member_to_sheet(new_nick.strip(), old_data)
                         try:
                             client = get_gspread_client()
@@ -405,20 +429,6 @@ else:
                         st.success(f"✅ 닉네임이 {new_nick.strip()} 으로 변경됐어요!")
                         st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
-            if st.button("LOGOUT", use_container_width=True):
-                st.session_state.logged_in = False
-                st.session_state.login_user = ""
-                try:
-                    controller.remove('saved_user_id')
-                except:
-                    pass
-                st.rerun()
-            if st.button("🔄 새로고침", use_container_width=True):
-                m_df = load_sheet_data("guildmembers")
-                f_df = load_sheet_data("guild_finance")
-                st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
-                st.session_state.auction_items = load_auction_from_sheet()
-                st.rerun()
 
             st.markdown("<div style='border-top:1px solid #1e293b;margin:12px 0;'></div>", unsafe_allow_html=True)
             c1, c2, c3 = st.columns(3)
@@ -449,6 +459,10 @@ else:
                 st.write("")
                 st.markdown("<div style='border:1px dashed #2e3d56;padding:15px;border-radius:8px;background-color:#141b29;'>", unsafe_allow_html=True)
                 st.caption("⚔️ **세부 능력치 입력 콘솔**")
+                job_list = ["뱅가드","버서커","디스트","레인저","엘리","디바인","어쌔신","데브","건슬","워로드"]
+                cur_job = member_info.get('job', '-')
+                job_idx = job_list.index(cur_job) if cur_job in job_list else 0
+                edit_job = st.selectbox("⚔️ 직업", job_list, index=job_idx, key="edit_job")
                 edit_atk = st.number_input("💥 공격력", value=member_info.get('atk', 0), step=1000, key="edit_atk")
                 edit_def = st.number_input("🛡️ 방어력", value=member_info.get('def', 0), step=1000, key="edit_def")
                 edit_hit = st.number_input("🎯 명중률", value=member_info.get('hit', 0), step=500, key="edit_hit")
@@ -463,6 +477,7 @@ else:
                 if st.button("적용", key="apply_power"):
                     st.session_state.db_data["guildmembers"][current_user].update({
                         "atk":edit_atk,"def":edit_def,"hit":edit_hit,"power":calc_total,
+                        "job":edit_job,
                         "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
                     })
                     with st.spinner("저장 중..."):
@@ -493,21 +508,24 @@ else:
                     crown_html = f"<span style='font-size:0.75rem;'>{crown}</span> "
                 else:
                     crown_html = f"<span style='font-size:0.72rem;color:#64748b;font-weight:700;'>{rank+1}. </span>"
+                job_val = m_data.get('job', '-')
+                if job_val in ['nan', '', None]: job_val = '-'
                 table_rows.append(
                     f"<tr>"
-                    f"<td style='text-align:left;width:26%;'><span class='member-name-tag'>{crown_html}{name}</span></td>"
-                    f"<td style='width:14%;'><span class='spec-atk'>{int(m_data.get('atk',0)):,}</span></td>"
-                    f"<td style='width:14%;'><span class='spec-def'>{int(m_data.get('def',0)):,}</span></td>"
-                    f"<td style='width:12%;'><span class='spec-hit'>{int(m_data.get('hit',0)):,}</span></td>"
-                    f"<td style='width:14%;'><span class='member-power-tag'>{int(m_data.get('power',0)):,}</span></td>"
-                    f"<td style='width:20%;'><span class='member-time-tag'>{t_val}</span></td>"
+                    f"<td style='text-align:left;width:22%;'><span class='member-name-tag'>{crown_html}{name}</span></td>"
+                    f"<td style='width:10%;'><span style='font-size:0.72rem;color:#c084fc;font-weight:700;'>{job_val}</span></td>"
+                    f"<td style='width:12%;'><span class='spec-atk'>{int(m_data.get('atk',0)):,}</span></td>"
+                    f"<td style='width:12%;'><span class='spec-def'>{int(m_data.get('def',0)):,}</span></td>"
+                    f"<td style='width:10%;'><span class='spec-hit'>{int(m_data.get('hit',0)):,}</span></td>"
+                    f"<td style='width:12%;'><span class='member-power-tag'>{int(m_data.get('power',0)):,}</span></td>"
+                    f"<td style='width:22%;'><span class='member-time-tag'>{t_val}</span></td>"
                     f"</tr>"
                 )
             st.html(
                 f"<table class='guild-roster-table'><thead><tr>"
-                f"<th style='width:26%;'>이름</th><th style='width:14%;'>공격</th>"
-                f"<th style='width:14%;'>방어</th><th style='width:12%;'>명중</th>"
-                f"<th style='width:14%;'>총합</th><th style='width:20%;'>갱신</th>"
+                f"<th style='width:22%;'>이름</th><th style='width:10%;'>직업</th><th style='width:12%;'>공격</th>"
+                f"<th style='width:12%;'>방어</th><th style='width:10%;'>명중</th>"
+                f"<th style='width:12%;'>총합</th><th style='width:22%;'>갱신</th>"
                 f"</tr></thead><tbody>{''.join(table_rows)}</tbody></table>"
             )
 
