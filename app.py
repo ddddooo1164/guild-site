@@ -367,7 +367,7 @@ if not st.session_state.logged_in:
             with st.container(border=True):
                 input_id = st.text_input("ID", placeholder="길드원 계정명 입력", key="login_id")
                 input_pw = st.text_input("PASSWORD", type="password", placeholder="비밀번호 입력", key="login_pw")
-                if st.button("CONNECT", use_container_width=True):
+                if st.button("로그인", use_container_width=True):
                     if input_id in st.session_state.db_data["guildmembers"]:
                         if st.session_state.db_data["guildmembers"][input_id]["password"] == input_pw:
                             st.session_state.logged_in = True
@@ -394,7 +394,7 @@ if not st.session_state.logged_in:
                 reg_id = st.text_input("인게임 닉네임", key="reg_id")
                 reg_pw = st.text_input("새 비밀번호", type="password", key="reg_pw")
                 reg_pw_confirm = st.text_input("비밀번호 확인", type="password", key="reg_pw_confirm")
-                if st.button("CREATE ACCOUNT", use_container_width=True):
+                if st.button("가입하기", use_container_width=True):
                     if reg_pw != reg_pw_confirm:
                         st.error("비밀번호가 일치하지 않아요!")
                     elif reg_id in st.session_state.db_data["guildmembers"]:
