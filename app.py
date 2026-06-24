@@ -19,7 +19,13 @@ SCOPES = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/a
 
 @st.cache_resource
 def get_gspread_client():
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    try:
+        # Streamlit Cloud 환경 (Secrets 사용)
+        secret_dict = {k: (dict(v) if hasattr(v, '_asdict') else v) for k, v in st.secrets["gcp_service_account"].items()}
+        creds = Credentials.from_service_account_info(secret_dict, scopes=SCOPES)
+    except (KeyError, FileNotFoundError):
+        # 로컬 환경 (credentials.json 사용)
+        creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
     return gspread.authorize(creds)
 
 def load_sheet_data(sheet_name):
