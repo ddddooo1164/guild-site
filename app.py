@@ -435,7 +435,10 @@ else:
                     except: pass
                 else: t_val = "-"
                 crown = crown_icons.get(rank, "")
-                crown_html = f"<span style='font-size:0.75rem;'>{crown}</span> " if crown else "👤 "
+                if crown:
+                    crown_html = f"<span style='font-size:0.75rem;'>{crown}</span> "
+                else:
+                    crown_html = f"<span style='font-size:0.72rem;color:#64748b;font-weight:700;'>{rank+1}. </span>"
                 table_rows.append(
                     f"<tr>"
                     f"<td style='text-align:left;width:26%;'><span class='member-name-tag'>{crown_html}{name}</span></td>"
