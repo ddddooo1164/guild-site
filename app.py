@@ -183,7 +183,7 @@ def finalize_auction(item, db_data):
         deadline = datetime.strptime(item["deadline"], "%Y-%m-%d %H:%M:%S")
     except ValueError:
         return item
-    if datetime.now(KST) < deadline:
+    if datetime.now(KST) < deadline.replace(tzinfo=KST):
         return item
     bidders = item.get("bidders", [])
     if not bidders:
