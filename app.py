@@ -209,6 +209,8 @@ if "db_data" not in st.session_state:
     st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
     st.session_state._debug_member_count = len(m_df)
     st.session_state._debug_member_names = list(m_df['name'].dropna().tolist()) if 'name' in m_df.columns else []
+    st.session_state._debug_columns = list(m_df.columns.tolist())
+    st.session_state._debug_raw_cols = str(m_df.columns.tolist()) if not m_df.empty else "empty"
 
 if "auction_items" not in st.session_state:
     st.session_state.auction_items = load_auction_from_sheet()
@@ -451,6 +453,7 @@ else:
             if st.session_state.get("_debug_member_count") is not None:
                 st.caption(f"시트에서 불러온 행: {st.session_state._debug_member_count}개")
                 st.caption(f"컬럼 목록: {st.session_state.get('_debug_columns', [])}")
+                st.caption(f"raw 컬럼: {st.session_state.get('_debug_raw_cols', '')}")
                 st.caption(f"이름 목록: {st.session_state._debug_member_names}")
             c1, c2, c3 = st.columns(3)
             with c1:
