@@ -341,7 +341,7 @@ if not st.session_state.logged_in:
                     st.rerun()
         with tab_register:
             with st.container(border=True):
-                reg_id = st.text_input("새 아이디", key="reg_id")
+                reg_id = st.text_input("인게임 닉네임", key="reg_id")
                 reg_pw = st.text_input("새 비밀번호", type="password", key="reg_pw")
                 reg_pw_confirm = st.text_input("비밀번호 확인", type="password", key="reg_pw_confirm")
                 if st.button("CREATE ACCOUNT", use_container_width=True):
@@ -421,15 +421,24 @@ else:
         with st.container(border=True):
             st.markdown("<div class='section-title'>📋 길드원 리스트 스펙 현황</div>", unsafe_allow_html=True)
             table_rows = []
-            for name, m_data in st.session_state.db_data["guildmembers"].items():
+            # 전투력 높은 순으로 정렬
+            sorted_members = sorted(
+                st.session_state.db_data["guildmembers"].items(),
+                key=lambda x: int(x[1].get('power', 0)),
+                reverse=True
+            )
+            crown_icons = {0: "👑", 1: "🥈", 2: "🥉"}
+            for rank, (name, m_data) in enumerate(sorted_members):
                 t_val = str(m_data.get('updated_at', '-'))
                 if t_val not in ["-", "nan"]:
                     try: t_val = datetime.strptime(t_val, "%Y-%m-%d %H:%M:%S").strftime("%m-%d %H:%M")
                     except: pass
                 else: t_val = "-"
+                crown = crown_icons.get(rank, "")
+                crown_html = f"<span style='font-size:0.75rem;'>{crown}</span> " if crown else "👤 "
                 table_rows.append(
                     f"<tr>"
-                    f"<td style='text-align:left;width:26%;'><span class='member-name-tag'>👤 {name}</span></td>"
+                    f"<td style='text-align:left;width:26%;'><span class='member-name-tag'>{crown_html}{name}</span></td>"
                     f"<td style='width:14%;'><span class='spec-atk'>{int(m_data.get('atk',0)):,}</span></td>"
                     f"<td style='width:14%;'><span class='spec-def'>{int(m_data.get('def',0)):,}</span></td>"
                     f"<td style='width:12%;'><span class='spec-hit'>{int(m_data.get('hit',0)):,}</span></td>"
