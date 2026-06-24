@@ -290,14 +290,19 @@ st.markdown("""
     [data-baseweb="menu"] { background-color: #1a2333 !important; border: 1px solid #2e3d56 !important; }
     [data-baseweb="menu"] li { background-color: #1a2333 !important; color: #ffffff !important; }
     [data-baseweb="menu"] li:hover { background-color: #2e3d56 !important; }
-    /* 모든 입력 관련 흰박스 글자 검정으로 */
-    input, textarea, select { color: #111622 !important; }
-    [data-baseweb="input"] input { color: #111622 !important; }
-    [data-baseweb="select"] input { color: #111622 !important; }
-    [data-baseweb="select"] div[aria-selected] { color: #111622 !important; }
-    [data-baseweb="select"] [role="combobox"] { color: #111622 !important; }
-    [data-baseweb="select"] span { color: #111622 !important; }
-    [data-baseweb="select"] > div > div > div { color: #111622 !important; }
+    /* selectbox - 누르기 전: 밝은 배경 + 검정 글씨 */
+    div[data-testid="stSelectbox"] > div > div { background-color: #e8edf2 !important; border: 1px solid #2e3d56 !important; }
+    div[data-testid="stSelectbox"] > div > div > div { color: #111622 !important; }
+    div[data-testid="stSelectbox"] svg { fill: #111622 !important; }
+    /* selectbox - 누른 후 드롭다운 목록: 어두운 배경 + 흰 글씨 */
+    [data-baseweb="popover"] { background-color: #1a2333 !important; }
+    [data-baseweb="menu"] { background-color: #1a2333 !important; border: 1px solid #2e3d56 !important; }
+    [data-baseweb="menu"] li { background-color: #1a2333 !important; color: #ffffff !important; }
+    [data-baseweb="menu"] li:hover { background-color: #2e3d56 !important; color: #ffffff !important; }
+    [data-baseweb="menu"] li * { color: #ffffff !important; }
+    /* input 박스 */
+    input { color: #111622 !important; background-color: #e8edf2 !important; }
+    textarea { color: #111622 !important; background-color: #e8edf2 !important; }
     .stButton-bid > div > button { background: rgba(251,191,36,0.1) !important; color: #fbbf24 !important; border: 1px solid #fbbf24 !important; font-size: 0.85rem !important; }
     .stButton-bid-diamond > div > button { background: rgba(56,189,248,0.1) !important; color: #38bdf8 !important; border: 1px solid #38bdf8 !important; font-size: 0.85rem !important; }
     .stButton-cancel > div > button { background: rgba(239,68,68,0.1) !important; color: #ef4444 !important; border: 1px solid #ef4444 !important; font-size: 0.85rem !important; margin-top: 0px !important; }
