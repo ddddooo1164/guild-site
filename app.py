@@ -474,8 +474,19 @@ else:
                 st.caption("⚔️ **세부 능력치 입력 콘솔**")
                 job_list = ["뱅가드","버서커","디스트","레인저","엘리","디바인","어쌔신","데브","건슬","워로드"]
                 cur_job = member_info.get('job', '-')
-                job_idx = job_list.index(cur_job) if cur_job in job_list else 0
-                edit_job = st.selectbox("⚔️ 직업", job_list, index=job_idx, key="edit_job")
+                if "selected_job" not in st.session_state:
+                    st.session_state.selected_job = cur_job if cur_job in job_list else job_list[0]
+                st.markdown("<span style='font-size:0.85rem;color:#ffffff;'>⚔️ 직업 선택</span>", unsafe_allow_html=True)
+                job_cols = st.columns(5)
+                for ji, jname in enumerate(job_list):
+                    with job_cols[ji % 5]:
+                        is_selected = st.session_state.selected_job == jname
+                        btn_style = "background:#0095ff;color:#fff;border:1px solid #0095ff;" if is_selected else "background:#1a2333;color:#fff;border:1px solid #2e3d56;"
+                        if st.button(jname, key=f"job_btn_{ji}", use_container_width=True):
+                            st.session_state.selected_job = jname
+                            st.rerun()
+                edit_job = st.session_state.selected_job
+                st.markdown(f"<div style='font-size:0.8rem;color:#38bdf8;margin-bottom:8px;'>선택된 직업: <b>{edit_job}</b></div>", unsafe_allow_html=True)
                 edit_atk = st.number_input("💥 공격력", value=member_info.get('atk', 0), step=1000, key="edit_atk")
                 edit_def = st.number_input("🛡️ 방어력", value=member_info.get('def', 0), step=1000, key="edit_def")
                 edit_hit = st.number_input("🎯 명중률", value=member_info.get('hit', 0), step=500, key="edit_hit")
