@@ -598,6 +598,10 @@ else:
             with sc6:
                 if st.button(f"갱신{get_sort_arrow('updated_at')}", key="sort_time", use_container_width=True):
                     sort_members("updated_at"); st.rerun()
+            if st.button("🔄 기본값", key="sort_reset", use_container_width=True):
+                st.session_state.sort_col = "power"
+                st.session_state.sort_asc = False
+                st.rerun()
 
             # 정렬 적용
             def get_sort_val(item):
