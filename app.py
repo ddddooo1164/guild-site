@@ -345,25 +345,22 @@ if not st.session_state.logged_in:
         # 상단 큰 버튼
         btn_a, btn_b = st.columns(2)
         with btn_a:
-            st.markdown(
-                f"<button onclick='' style='width:100%;padding:14px;font-size:1rem;font-weight:800;border-radius:8px;border:none;cursor:pointer;"
-                f"background:{'#0095ff' if st.session_state.auth_mode == 'login' else '#1a2333'};"
-                f"color:#ffffff;letter-spacing:1px;'>🔐 로그인</button>",
-                unsafe_allow_html=True
-            )
-            if st.button("로그인", key="mode_login", use_container_width=True):
+            login_bg = "#0095ff" if st.session_state.auth_mode == "login" else "#1a2333"
+            st.markdown(f"<style>div[data-testid='stButton'] button[kind='secondary']{{}} </style>", unsafe_allow_html=True)
+            st.markdown(f"<div style='margin-bottom:-8px;'>", unsafe_allow_html=True)
+            if st.button("🔐 로그인", key="mode_login", use_container_width=True):
                 st.session_state.auth_mode = "login"
                 st.rerun()
+            st.markdown(f"<style> div[data-testid='stButton']:nth-of-type(1) button {{ background:{login_bg} !important; color:#fff !important; border:none !important; font-size:1rem !important; font-weight:800 !important; padding:14px !important; }} </style>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
         with btn_b:
-            st.markdown(
-                f"<button onclick='' style='width:100%;padding:14px;font-size:1rem;font-weight:800;border-radius:8px;border:none;cursor:pointer;"
-                f"background:{'#0095ff' if st.session_state.auth_mode == 'register' else '#1a2333'};"
-                f"color:#ffffff;letter-spacing:1px;'>📝 회원가입</button>",
-                unsafe_allow_html=True
-            )
-            if st.button("회원가입", key="mode_register", use_container_width=True):
+            reg_bg = "#0095ff" if st.session_state.auth_mode == "register" else "#1a2333"
+            st.markdown(f"<div style='margin-bottom:-8px;'>", unsafe_allow_html=True)
+            if st.button("📝 회원가입", key="mode_register", use_container_width=True):
                 st.session_state.auth_mode = "register"
                 st.rerun()
+            st.markdown(f"<style> div[data-testid='stButton']:nth-of-type(2) button {{ background:{reg_bg} !important; color:#fff !important; border:none !important; font-size:1rem !important; font-weight:800 !important; padding:14px !important; }} </style>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.write("")
 
