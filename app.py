@@ -372,8 +372,7 @@ else:
     # ── 왼쪽 컬럼 ──
     with col_left:
         with st.container(border=True):
-            st.markdown("<div class='section-title'>👤 계정 정보</div>", unsafe_allow_html=True)
-            st.write(f"현재 접속: **{current_user}** 님")
+            st.markdown(f"<div class='section-title'>👤 현재 <span style='color:#38bdf8;'>{current_user}</span> 님의 정보</div>", unsafe_allow_html=True)
             if st.button("✏️ 닉네임 변경", use_container_width=True):
                 st.session_state.show_nick_editor = not st.session_state.get("show_nick_editor", False)
             if st.session_state.get("show_nick_editor", False):
@@ -418,6 +417,58 @@ else:
                 st.session_state.auction_items = load_auction_from_sheet()
                 st.rerun()
 
+            st.markdown("<div style='border-top:1px solid #1e293b;margin:12px 0;'></div>", unsafe_allow_html=True)
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
+                st.markdown(f"<div class='stat-val blue-txt'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
+                st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
+                if st.button("💸 출금 신청", use_container_width=True):
+                    st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
+                    save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+            with c2:
+                st.markdown("<span style='font-size:13px;'>현재 참여도</span>", unsafe_allow_html=True)
+                st.markdown("<div class='stat-val purple-txt'>94.5 %</div>", unsafe_allow_html=True)
+                st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
+                if st.button("📅 출석 체크", use_container_width=True): st.success("확인 완료")
+                st.markdown("</div>", unsafe_allow_html=True)
+            with c3:
+                st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
+                st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
+                st.markdown("<div class='stButton-refresh'>", unsafe_allow_html=True)
+                if st.button("⚡ 투력 최신화", use_container_width=True):
+                    st.session_state.show_power_editor = not st.session_state.get("show_power_editor", False)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            if st.session_state.get("show_power_editor", False):
+                st.write("")
+                st.markdown("<div style='border:1px dashed #2e3d56;padding:15px;border-radius:8px;background-color:#141b29;'>", unsafe_allow_html=True)
+                st.caption("⚔️ **세부 능력치 입력 콘솔**")
+                edit_atk = st.number_input("💥 공격력", value=member_info.get('atk', 0), step=1000, key="edit_atk")
+                edit_def = st.number_input("🛡️ 방어력", value=member_info.get('def', 0), step=1000, key="edit_def")
+                edit_hit = st.number_input("🎯 명중률", value=member_info.get('hit', 0), step=500, key="edit_hit")
+                calc_total = edit_atk + edit_def + edit_hit
+                st.markdown(
+                    f"<div style='margin-top:12px;background:#1c2536;padding:8px;border-radius:4px;text-align:center;'>"
+                    f"<span style='font-size:12px;'>공/방/명 합산 전투력</span><br/>"
+                    f"<strong style='color:#4ade80 !important;font-size:1.15rem;'>{calc_total:,}</strong></div>",
+                    unsafe_allow_html=True
+                )
+                st.write("")
+                if st.button("적용", key="apply_power"):
+                    st.session_state.db_data["guildmembers"][current_user].update({
+                        "atk":edit_atk,"def":edit_def,"hit":edit_hit,"power":calc_total,
+                        "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    with st.spinner("저장 중..."):
+                        ok = save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
+                    if ok: st.success("✅ 저장 완료!")
+                    st.session_state.show_power_editor = False
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
         with st.container(border=True):
             st.markdown("<div class='section-title'>📋 길드원 리스트 스펙 현황</div>", unsafe_allow_html=True)
             table_rows = []
@@ -459,59 +510,6 @@ else:
 
     # ── 가운데 컬럼 ──
     with col_center:
-        with st.container(border=True):
-            st.markdown("<div class='section-title'>현재 나의 정보</div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val blue-txt'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
-                st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
-                if st.button("💸 출금 신청", use_container_width=True):
-                    st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
-                    save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-            with c2:
-                st.markdown("<span style='font-size:13px;'>현재 참여도</span>", unsafe_allow_html=True)
-                st.markdown("<div class='stat-val purple-txt'>94.5 %</div>", unsafe_allow_html=True)
-                st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
-                if st.button("📅 출석 체크", use_container_width=True): st.success("확인 완료")
-                st.markdown("</div>", unsafe_allow_html=True)
-            with c3:
-                st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
-                st.markdown("<div class='stButton-refresh'>", unsafe_allow_html=True)
-                if st.button("⚡ 투력 최신화", use_container_width=True):
-                    st.session_state.show_power_editor = not st.session_state.get("show_power_editor", False)
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            if st.session_state.get("show_power_editor", False):
-                st.write("")
-                st.markdown("<div style='border:1px dashed #2e3d56;padding:15px;border-radius:8px;background-color:#141b29;'>", unsafe_allow_html=True)
-                st.caption("⚔️ **세부 능력치 입력 콘솔**")
-                edit_atk = st.number_input("💥 공격력", value=member_info.get('atk', 0), step=1000)
-                edit_def = st.number_input("🛡️ 방어력", value=member_info.get('def', 0), step=1000)
-                edit_hit = st.number_input("🎯 명중률", value=member_info.get('hit', 0), step=500)
-                calc_total = edit_atk + edit_def + edit_hit
-                st.markdown(
-                    f"<div style='margin-top:12px;background:#1c2536;padding:8px;border-radius:4px;text-align:center;'>"
-                    f"<span style='font-size:12px;'>공/방/명 합산 전투력</span><br/>"
-                    f"<strong style='color:#4ade80 !important;font-size:1.15rem;'>{calc_total:,}</strong></div>",
-                    unsafe_allow_html=True
-                )
-                st.write("")
-                if st.button("적용"):
-                    st.session_state.db_data["guildmembers"][current_user].update({
-                        "atk":edit_atk,"def":edit_def,"hit":edit_hit,"power":calc_total,
-                        "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
-                    })
-                    with st.spinner("저장 중..."):
-                        ok = save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
-                    if ok: st.success("✅ 저장 완료!")
-                    st.session_state.show_power_editor = False
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
         # ── 아이템 입찰 현황 ──
         with st.container(border=True):
             st.markdown("<div class='section-title'>🏆 아이템 입찰 현황</div>", unsafe_allow_html=True)
