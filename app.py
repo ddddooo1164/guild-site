@@ -408,7 +408,10 @@ else:
             if st.button("LOGOUT", use_container_width=True):
                 st.session_state.logged_in = False
                 st.session_state.login_user = ""
-                controller.remove('saved_user_id')
+                try:
+                    controller.remove('saved_user_id')
+                except:
+                    pass
                 st.rerun()
             if st.button("🔄 새로고침", use_container_width=True):
                 m_df = load_sheet_data("guildmembers")
