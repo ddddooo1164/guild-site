@@ -2,7 +2,9 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+KST = ZoneInfo('Asia/Seoul')
 from streamlit_cookies_controller import CookieController
 
 # 1. 페이지 기본 설정
@@ -181,7 +183,7 @@ def finalize_auction(item, db_data):
         deadline = datetime.strptime(item["deadline"], "%Y-%m-%d %H:%M:%S")
     except ValueError:
         return item
-    if datetime.now() < deadline:
+    if datetime.now(KST) < deadline:
         return item
     bidders = item.get("bidders", [])
     if not bidders:
@@ -331,7 +333,7 @@ if not st.session_state.logged_in:
                     if "마스터" not in st.session_state.db_data["guildmembers"]:
                         st.session_state.db_data["guildmembers"]["마스터"] = {
                             "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
-                            "updated_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
                             "attendance":{"레기카":False,"시온":False,"플라우드":False}
                         }
                     st.session_state.logged_in = True
@@ -350,7 +352,7 @@ if not st.session_state.logged_in:
                     else:
                         new_member = {
                             "password":reg_pw,"gold":0,"atk":0,"def":0,"hit":0,"power":0,
-                            "updated_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
                             "attendance":{"레기카":False,"시온":False,"플라우드":False}
                         }
                         st.session_state.db_data["guildmembers"][reg_id] = new_member
@@ -376,6 +378,12 @@ else:
                 st.session_state.logged_in = False
                 st.session_state.login_user = ""
                 controller.remove('saved_user_id')
+                st.rerun()
+            if st.button("🔄 새로고침", use_container_width=True):
+                m_df = load_sheet_data("guildmembers")
+                f_df = load_sheet_data("guild_finance")
+                st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
+                st.session_state.auction_items = load_auction_from_sheet()
                 st.rerun()
 
         with st.container(border=True):
@@ -451,7 +459,7 @@ else:
                 if st.button("적용"):
                     st.session_state.db_data["guildmembers"][current_user].update({
                         "atk":edit_atk,"def":edit_def,"hit":edit_hit,"power":calc_total,
-                        "updated_at":datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
                     })
                     with st.spinner("저장 중..."):
                         ok = save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
@@ -507,7 +515,7 @@ else:
                         return (99, 0)  # 경매중 아닌 건 맨 아래
                     try:
                         deadline_dt = datetime.strptime(item["deadline"], "%Y-%m-%d %H:%M:%S")
-                        remaining_sec = (deadline_dt - datetime.now()).total_seconds()
+                        remaining_sec = (deadline_dt.replace(tzinfo=KST) - datetime.now(KST)).total_seconds()
                     except:
                         remaining_sec = 99999
                     is_urgent = remaining_sec <= 3600  # 1시간 이내
@@ -529,7 +537,7 @@ else:
                     # 마감 시간 계산
                     try:
                         deadline_dt = datetime.strptime(item["deadline"], "%Y-%m-%d %H:%M:%S")
-                        remaining = deadline_dt - datetime.now()
+                        remaining = deadline_dt.replace(tzinfo=KST) - datetime.now(KST)
                         if remaining.total_seconds() > 0:
                             hours, rem = divmod(int(remaining.total_seconds()), 3600)
                             mins = rem // 60
