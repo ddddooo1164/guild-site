@@ -481,12 +481,11 @@ else:
                 for ji, jname in enumerate(job_list):
                     with job_cols[ji % 5]:
                         is_selected = st.session_state.selected_job == jname
+                        if st.button(jname, key=f"job_btn_{ji}", use_container_width=True):
+                            st.session_state.selected_job = jname
+                            st.rerun()
                         if is_selected:
-                            st.markdown(f"<div style='background:#0095ff;color:#fff;border:1px solid #0095ff;border-radius:6px;padding:4px;text-align:center;font-size:0.8rem;font-weight:700;'>{jname}</div>", unsafe_allow_html=True)
-                        else:
-                            if st.button(jname, key=f"job_btn_{ji}", use_container_width=True):
-                                st.session_state.selected_job = jname
-                                st.rerun()
+                            st.markdown(f"<div style='height:3px;background:#0095ff;border-radius:2px;margin-top:-8px;'></div>", unsafe_allow_html=True)
                 edit_job = st.session_state.selected_job
                 st.markdown(f"<div style='font-size:0.8rem;color:#38bdf8;margin-bottom:8px;'>선택된 직업: <b>{edit_job}</b></div>", unsafe_allow_html=True)
                 edit_atk = st.number_input("💥 공격력", value=member_info.get('atk', 0), step=1000, key="edit_atk")
