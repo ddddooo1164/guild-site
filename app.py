@@ -34,8 +34,8 @@ def load_sheet_data(sheet_name):
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
     try:
         df = pd.read_csv(url)
-        df = df.dropna(how='all', axis=1).dropna(subset=['name'] if 'name' in df.columns else df.columns[:1])
         df.columns = [str(c).strip().lower() for c in df.columns]
+        df = df.dropna(how='all', axis=0)
         return df
     except Exception as e:
         st.error(f"시트 로드 실패 ({sheet_name}): {e}")
