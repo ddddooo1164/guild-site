@@ -476,18 +476,34 @@ else:
                 cur_job = member_info.get('job', '-')
                 if "selected_job" not in st.session_state:
                     st.session_state.selected_job = cur_job if cur_job in job_list else job_list[0]
-                st.markdown("<span style='font-size:0.85rem;color:#ffffff;'>⚔️ 직업 선택</span>", unsafe_allow_html=True)
-                job_cols = st.columns(5)
-                for ji, jname in enumerate(job_list):
-                    with job_cols[ji % 5]:
-                        is_selected = st.session_state.selected_job == jname
-                        if st.button(jname, key=f"job_btn_{ji}", use_container_width=True):
-                            st.session_state.selected_job = jname
-                            st.rerun()
-                        if is_selected:
-                            st.markdown(f"<div style='height:3px;background:#0095ff;border-radius:2px;margin-top:-8px;'></div>", unsafe_allow_html=True)
-                edit_job = st.session_state.selected_job
-                st.markdown(f"<div style='font-size:0.8rem;color:#38bdf8;margin-bottom:8px;'>선택된 직업: <b>{edit_job}</b></div>", unsafe_allow_html=True)
+                st.markdown("""
+                <style>
+                div[data-testid="stRadio"] > div {
+                    display: flex; flex-wrap: wrap; gap: 6px;
+                }
+                div[data-testid="stRadio"] > div > label {
+                    display: flex !important;
+                    background: #2e3d56 !important;
+                    color: #ffffff !important;
+                    border: 1px solid #3e4d66 !important;
+                    border-radius: 6px !important;
+                    padding: 5px 12px !important;
+                    font-size: 0.8rem !important;
+                    font-weight: 700 !important;
+                    cursor: pointer !important;
+                    margin: 0 !important;
+                }
+                div[data-testid="stRadio"] > div > label:has(input:checked) {
+                    background: #0095ff !important;
+                    border-color: #0095ff !important;
+                    color: #ffffff !important;
+                }
+                div[data-testid="stRadio"] > div > label > div:first-child { display: none !important; }
+                </style>
+                """, unsafe_allow_html=True)
+                job_idx = job_list.index(st.session_state.selected_job) if st.session_state.selected_job in job_list else 0
+                edit_job = st.radio("⚔️ 직업", job_list, index=job_idx, key="job_radio", horizontal=True)
+                st.session_state.selected_job = edit_job
                 edit_atk = st.number_input("💥 공격력", value=member_info.get('atk', 0), step=1000, key="edit_atk")
                 edit_def = st.number_input("🛡️ 방어력", value=member_info.get('def', 0), step=1000, key="edit_def")
                 edit_hit = st.number_input("🎯 명중률", value=member_info.get('hit', 0), step=500, key="edit_hit")
