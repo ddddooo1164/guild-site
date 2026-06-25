@@ -333,11 +333,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-t1, t2, t3 = st.columns([3, 3, 1])
-with t2:
-    st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
-with t3:
-    st.markdown("<div style='padding-top:8px;'>", unsafe_allow_html=True)
+# 타이틀은 전체 폭으로 가운데 정렬, 마스터는 absolute로 오른쪽에
+st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
+_, master_top_col = st.columns([6, 1])
+with master_top_col:
+    st.markdown("<div style='margin-top:-58px;'>", unsafe_allow_html=True)
     quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
     if quick_pw_top == "1234":
