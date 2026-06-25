@@ -132,17 +132,17 @@ def save_finance_to_sheet(finance):
         st.error(f"자산 시트 저장 실패: {e}")
         return False
 
-def save_attendance_log(session_time, attendees):
+def save_attendance_log(session_time, attendees, boss_score=0):
     try:
         client = get_gspread_client()
         sh = client.open_by_key(SHEET_ID)
         try:
             ws = sh.worksheet("attendance_log")
         except:
-            ws = sh.add_worksheet(title="attendance_log", rows="1000", cols="3")
-            ws.update("A1", [["session_time", "name", "checked_at"]])
+            ws = sh.add_worksheet(title="attendance_log", rows="1000", cols="4")
+            ws.update("A1", [["session_time", "boss_score", "name", "checked_at"]])
         for name, checked_at in attendees.items():
-            ws.append_row([session_time, name, checked_at])
+            ws.append_row([session_time, boss_score, name, checked_at])
         return True
     except Exception as e:
         st.error(f"출석 저장 실패: {e}")
@@ -1015,7 +1015,8 @@ if True:
                     # 10분 지나면 자동 종료 후 시트 저장
                     save_attendance_log(
                         st.session_state.attend_session_id,
-                        st.session_state.attend_list
+                        st.session_state.attend_list,
+                        st.session_state.get("attend_boss_score", 0)
                     )
                     st.session_state.attend_active = False
 
