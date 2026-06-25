@@ -675,8 +675,7 @@ if True:
                     save_transaction(current_user, prev_gold, "출금", "출금 신청")
                     st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
-                if st.button("📒 입출금 내역", use_container_width=True):
-                    st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
+
                 if st.session_state.get("show_transactions", False):
                     txs = load_my_transactions(current_user)
                     if not txs:
@@ -698,6 +697,8 @@ if True:
                 st.markdown("<span style='font-size:13px;'>참여도</span>", unsafe_allow_html=True)
                 st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;'>나의 기여도: {my_contribution}%</div>", unsafe_allow_html=True)
                 st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;margin-bottom:8px;'>보스 참여도: {my_attend_rate}%</div>", unsafe_allow_html=True)
+                if st.button("📒 입출금 내역", use_container_width=True, key="tx_btn_c2"):
+                    st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
             with c3:
                 st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
                 st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
