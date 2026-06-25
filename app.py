@@ -165,6 +165,80 @@ def load_attendance_log():
     except:
         return []
 
+def get_attendance_scores():
+    """attendance_log에서 현재 사이클 점수 합산"""
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        ws = sh.worksheet("attendance_log")
+        all_values = ws.get_all_values()
+        if len(all_values) < 2:
+            return {}, []
+        headers = all_values[0]
+        rows = all_values[1:]
+        scores = {}
+        for row in rows:
+            row_dict = dict(zip(headers, row))
+            name = row_dict.get("name", "")
+            try:
+                score = int(row_dict.get("boss_score", 0))
+            except:
+                score = 0
+            if name:
+                scores[name] = scores.get(name, 0) + score
+        return scores, rows
+    except Exception as e:
+        return {}, []
+
+def save_settlement_log(settlement_time, scores, total_pool, distributions):
+    """정산 기록 settlement_log 탭에 저장"""
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("settlement_log")
+        except:
+            ws = sh.add_worksheet(title="settlement_log", rows="1000", cols="5")
+            ws.update("A1", [["settlement_time", "name", "score", "ratio", "gold_given"]])
+        for name, score in scores.items():
+            total_score = sum(scores.values())
+            ratio = round(score / total_score * 100, 2) if total_score > 0 else 0
+            gold = distributions.get(name, 0)
+            ws.append_row([settlement_time, name, score, f"{ratio}%", gold])
+        return True
+    except Exception as e:
+        st.error(f"정산 기록 저장 실패: {e}")
+        return False
+
+def clear_attendance_log():
+    """attendance_log 초기화 (헤더만 남김)"""
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        ws = sh.worksheet("attendance_log")
+        ws.clear()
+        ws.update("A1", [["session_time", "boss_score", "name", "checked_at"]])
+        return True
+    except Exception as e:
+        st.error(f"출석 기록 초기화 실패: {e}")
+        return False
+
+def load_settlement_log():
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("settlement_log")
+            all_values = ws.get_all_values()
+            if len(all_values) < 2:
+                return []
+            headers = all_values[0]
+            return [dict(zip(headers, row)) for row in all_values[1:]]
+        except:
+            return []
+    except:
+        return []
+
 def load_auction_from_sheet():
     try:
         df = load_sheet_data("auction_items")
@@ -372,6 +446,7 @@ _, master_top_col = st.columns([8, 1])
 with master_top_col:
     st.markdown("<div style='margin-top:-58px;'>", unsafe_allow_html=True)
     quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
+    st.markdown("<style>div[data-testid='stButton']:has(button[kind='secondary'][id*='master_login_btn']) button{padding:2px 4px !important;font-size:0.7rem !important;height:24px !important;}</style>", unsafe_allow_html=True)
     if st.button("입장", key="master_login_btn", use_container_width=True):
         if quick_pw_top == "1234":
             if "마스터" not in st.session_state.db_data["guildmembers"]:
@@ -966,6 +1041,74 @@ if True:
                 f"<tr><td style='text-align:left;padding-left:4px;'>📅 참여분배금</td><td><span style='color:#c084fc;font-weight:bold;'>{finance.get('attend_dist',0):,} 💎</span></td></tr>"
                 f"</tbody></table>"
             )
+
+            # 마스터 전용: 참여분배 정산
+            if is_master:
+                st.markdown("<div style='border-top:1px solid #1e293b;margin:12px 0;'></div>", unsafe_allow_html=True)
+                st.caption("💰 **참여분배 정산**")
+                scores, _ = get_attendance_scores()
+                total_score = sum(scores.values())
+                attend_pool = st.session_state.db_data.get("guild_finance", {}).get("attend_dist", 0)
+
+                if scores:
+                    st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-bottom:6px;'>총 참여점수: {total_score:,}점 / 분배금: {attend_pool:,} 💎</div>", unsafe_allow_html=True)
+                    distributions = {}
+                    for name, score in sorted(scores.items(), key=lambda x: -x[1]):
+                        ratio = score / total_score if total_score > 0 else 0
+                        gold = int(attend_pool * ratio)
+                        distributions[name] = gold
+                        st.markdown(
+                            f"<div style='font-size:0.78rem;padding:2px 0;border-bottom:1px solid #1e293b;'>"
+                            f"<span style='color:#ffffff;'>{name}</span>"
+                            f"<span style='color:#94a3b8;font-size:0.72rem;'> ({score}점 / {ratio*100:.1f}%)</span>"
+                            f"<span style='color:#f59e0b;float:right;'>{gold:,} 💎</span>"
+                            f"</div>",
+                            unsafe_allow_html=True
+                        )
+
+                    if st.button("✅ 참여분배 정산 확정", use_container_width=True, key="settle_btn"):
+                        now_str = datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
+                        # 각 길드원 gold에 지급
+                        for name, gold in distributions.items():
+                            if name in st.session_state.db_data["guildmembers"]:
+                                st.session_state.db_data["guildmembers"][name]["gold"] =                                     st.session_state.db_data["guildmembers"][name].get("gold", 0) + gold
+                                save_member_to_sheet(name, st.session_state.db_data["guildmembers"][name])
+                        # 참여분배금 0으로 초기화
+                        finance = st.session_state.db_data.get("guild_finance", {})
+                        finance["attend_dist"] = 0
+                        st.session_state.db_data["guild_finance"] = finance
+                        save_finance_to_sheet(finance)
+                        # 정산 기록 저장
+                        save_settlement_log(now_str, scores, attend_pool, distributions)
+                        # 출석 기록 초기화
+                        clear_attendance_log()
+                        st.success("✅ 정산 완료! 출석 기록이 초기화됐어요.")
+                        st.rerun()
+                else:
+                    st.caption("출석 기록이 없어요")
+
+                # 과거 정산 기록
+                with st.expander("📜 과거 정산 기록"):
+                    logs = load_settlement_log()
+                    if not logs:
+                        st.caption("기록 없음")
+                    else:
+                        sessions = {}
+                        for log in logs:
+                            sid = log.get("settlement_time", "")
+                            if sid not in sessions:
+                                sessions[sid] = []
+                            sessions[sid].append(log)
+                        for sid, entries in sorted(sessions.items(), reverse=True):
+                            st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-top:8px;font-weight:700;'>{sid}</div>", unsafe_allow_html=True)
+                            for e in entries:
+                                st.markdown(
+                                    f"<div style='font-size:0.75rem;color:#ffffff;padding:2px 0;'>"
+                                    f"{e.get('name','')} · {e.get('score','')}점 · {e.get('ratio','')} · "
+                                    f"<span style='color:#f59e0b;'>{e.get('gold_given','')} 💎</span>"
+                                    f"</div>",
+                                    unsafe_allow_html=True
+                                )
 
             # 마스터 전용: 다이아 수입 입력 및 자동 분배
             if is_master:
