@@ -666,15 +666,19 @@ if True:
             c1, c2, c3 = st.columns(3)
             with c1:
                 st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val blue-txt'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='stat-val blue-txt' style='margin-bottom:24px;'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
             with c2:
                 my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
                 st.markdown("<span style='font-size:13px;'>참여도</span>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;'>나의 기여도: {my_contribution}%</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;'>보스 참여도: {my_attend_rate}%</div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div style='font-size:0.82rem;color:#c084fc;font-weight:700;margin-top:4px;line-height:1.8;'>"
+                    f"기여도: {my_contribution}%<br>참여도: {my_attend_rate}%"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
             with c3:
                 st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='stat-val green-txt' style='margin-bottom:24px;'>{member_info['power']:,}</div>", unsafe_allow_html=True)
 
             # 버튼 한 줄
             b1, b2, b3 = st.columns(3)
