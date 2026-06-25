@@ -592,6 +592,21 @@ with master_top_col:
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
 
+# 출석 진행 중일 때 자동 갱신 (페이지 맨 위에서 처리)
+import time
+if not st.session_state.get("just_started_attend", False):
+    try:
+        _attend_active, _, _, _ = load_attend_status()
+        if _attend_active:
+            _is_master = st.session_state.get("login_user", "") == "마스터"
+            _interval = 1 if _is_master else 10
+            _last = st.session_state.get("attend_last_refresh", 0)
+            if time.time() - _last >= _interval:
+                st.session_state.attend_last_refresh = time.time()
+                st.rerun()
+    except:
+        pass
+
 if True:
     col_left, col_center, col_right = st.columns([1.0, 1.0, 0.9])
     current_user = st.session_state.get("login_user", "")
@@ -1306,15 +1321,6 @@ if True:
 
             # 시트에서 출석 상태 로드
             attend_active, attend_session_id, attend_boss_score, attend_list = load_attend_status()
-
-            # 출석 진행 중일 때 자동 갱신
-            if attend_active and not st.session_state.get("just_started_attend", False):
-                import time
-                refresh_interval = 1 if is_master else 10
-                last_refresh = st.session_state.get("attend_last_refresh", 0)
-                if time.time() - last_refresh >= refresh_interval:
-                    st.session_state.attend_last_refresh = time.time()
-                    st.rerun()
             st.session_state.just_started_attend = False
 
             # 마감 체크 (세션 시작 시간은 세션에 저장)
