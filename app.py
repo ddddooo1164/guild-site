@@ -333,11 +333,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-title_col, master_col = st.columns([5, 1])
-with title_col:
-    st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
+st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
+_, master_col = st.columns([6, 1])
 with master_col:
+    st.markdown("<div style='margin-top:-60px;'>", unsafe_allow_html=True)
     quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
+    st.markdown("</div>", unsafe_allow_html=True)
     if quick_pw_top == "1234":
         if "마스터" not in st.session_state.db_data["guildmembers"]:
             st.session_state.db_data["guildmembers"]["마스터"] = {
