@@ -486,6 +486,7 @@ if "logged_in" not in st.session_state:
     if cookie_user and cookie_user in st.session_state.db_data["guildmembers"]:
         st.session_state.logged_in = True
         st.session_state.login_user = cookie_user
+        st.session_state.balance_cache = get_balance(cookie_user)
     else:
         st.session_state.logged_in = False
 if "login_user" not in st.session_state:
@@ -636,6 +637,7 @@ if True:
                             if st.session_state.db_data["guildmembers"][input_id]["password"] == input_pw:
                                 st.session_state.logged_in = True
                                 st.session_state.login_user = input_id
+                                st.session_state.balance_cache = get_balance(input_id)
                                 controller.set('saved_user_id', input_id)
                                 st.rerun()
                             else: st.error("❌ 비밀번호 오류")
