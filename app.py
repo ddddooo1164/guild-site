@@ -372,17 +372,18 @@ _, master_top_col = st.columns([6, 1])
 with master_top_col:
     st.markdown("<div style='margin-top:-58px;'>", unsafe_allow_html=True)
     quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
+    if st.button("입장", key="master_login_btn", use_container_width=True):
+        if quick_pw_top == "1234":
+            if "마스터" not in st.session_state.db_data["guildmembers"]:
+                st.session_state.db_data["guildmembers"]["마스터"] = {
+                    "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
+                    "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
+                    "attendance":{"레기카":False,"시온":False,"플라우드":False}
+                }
+            st.session_state.logged_in = True
+            st.session_state.login_user = "마스터"
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
-    if quick_pw_top == "1234":
-        if "마스터" not in st.session_state.db_data["guildmembers"]:
-            st.session_state.db_data["guildmembers"]["마스터"] = {
-                "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
-                "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
-                "attendance":{"레기카":False,"시온":False,"플라우드":False}
-            }
-        st.session_state.logged_in = True
-        st.session_state.login_user = "마스터"
-        st.rerun()
 
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
