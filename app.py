@@ -1044,6 +1044,11 @@ if True:
                 already_checked = current_user in st.session_state.attend_list
                 if already_checked:
                     st.markdown(f"<div style='color:#4ade80;font-size:0.85rem;text-align:center;padding:8px;border:1px solid #4ade80;border-radius:6px;'>✅ 출석 완료!</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='stButton-cancel'>", unsafe_allow_html=True)
+                    if st.button("❌ 출석 취소", use_container_width=True):
+                        del st.session_state.attend_list[current_user]
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
                 else:
                     if st.session_state.logged_in:
                         st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
