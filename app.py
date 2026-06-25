@@ -335,84 +335,12 @@ st.markdown("""
 
 st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
 
-if not st.session_state.logged_in:
-    # 상단 버튼으로 로그인/회원가입 전환
-    if "auth_mode" not in st.session_state:
-        st.session_state.auth_mode = "login"
+if "auth_mode" not in st.session_state:
+    st.session_state.auth_mode = "login"
 
-    col_l, col_c, col_r = st.columns([1.0, 1.2, 1.0])
-    with col_c:
-        # 상단 큰 버튼
-        # 선택된 탭 색상 동적 주입
-        login_bg = "#0095ff" if st.session_state.auth_mode == "login" else "#1a2333"
-        reg_bg = "#0095ff" if st.session_state.auth_mode == "register" else "#1a2333"
-        st.markdown(f"<style>.auth-btn-login button{{background:{login_bg} !important;color:#fff !important;border:none !important;font-size:1rem !important;font-weight:800 !important;padding:14px !important;}}.auth-btn-register button{{background:{reg_bg} !important;color:#fff !important;border:none !important;font-size:1rem !important;font-weight:800 !important;padding:14px !important;}}</style>", unsafe_allow_html=True)
-        btn_a, btn_b = st.columns(2)
-        with btn_a:
-            st.markdown("<div class='auth-btn-login'>", unsafe_allow_html=True)
-            if st.button("🔐 로그인", key="mode_login", use_container_width=True):
-                st.session_state.auth_mode = "login"
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
-        with btn_b:
-            st.markdown("<div class='auth-btn-register'>", unsafe_allow_html=True)
-            if st.button("📝 회원가입", key="mode_register", use_container_width=True):
-                st.session_state.auth_mode = "register"
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        st.write("")
-
-        if st.session_state.auth_mode == "login":
-            with st.container(border=True):
-                input_id = st.text_input("ID", placeholder="길드원 계정명 입력", key="login_id")
-                input_pw = st.text_input("PASSWORD", type="password", placeholder="비밀번호 입력", key="login_pw")
-                if st.button("로그인", use_container_width=True):
-                    if input_id in st.session_state.db_data["guildmembers"]:
-                        if st.session_state.db_data["guildmembers"][input_id]["password"] == input_pw:
-                            st.session_state.logged_in = True
-                            st.session_state.login_user = input_id
-                            controller.set('saved_user_id', input_id)
-                            st.rerun()
-                        else: st.error("❌ 비밀번호 오류")
-                    else: st.error("❌ 미등록 계정")
-            col_spacer, col_quick = st.columns([3, 2])
-            with col_quick:
-                quick_pw = st.text_input("Master", type="password", placeholder="마스터 비번", label_visibility="collapsed")
-                if quick_pw == "1234":
-                    if "마스터" not in st.session_state.db_data["guildmembers"]:
-                        st.session_state.db_data["guildmembers"]["마스터"] = {
-                            "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
-                            "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
-                            "attendance":{"레기카":False,"시온":False,"플라우드":False}
-                        }
-                    st.session_state.logged_in = True
-                    st.session_state.login_user = "마스터"
-                    st.rerun()
-        else:
-            with st.container(border=True):
-                reg_id = st.text_input("인게임 닉네임", key="reg_id")
-                reg_pw = st.text_input("새 비밀번호", type="password", key="reg_pw")
-                reg_pw_confirm = st.text_input("비밀번호 확인", type="password", key="reg_pw_confirm")
-                if st.button("가입하기", use_container_width=True):
-                    if reg_pw != reg_pw_confirm:
-                        st.error("비밀번호가 일치하지 않아요!")
-                    elif reg_id in st.session_state.db_data["guildmembers"]:
-                        st.error("이미 존재하는 아이디예요!")
-                    else:
-                        new_member = {
-                            "password":reg_pw,"gold":0,"atk":0,"def":0,"hit":0,"power":0,
-                            "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
-                            "attendance":{"레기카":False,"시온":False,"플라우드":False},
-                            "job":"-"
-                        }
-                        st.session_state.db_data["guildmembers"][reg_id] = new_member
-                        if save_member_to_sheet(reg_id, new_member):
-                            st.success("가입 완료! ✅")
-
-else:
+if True:
     col_left, col_center, col_right = st.columns([1.0, 1.0, 0.9])
-    current_user = st.session_state.login_user
+    current_user = st.session_state.get("login_user", "")
     is_master = current_user == "마스터"
     member_info = st.session_state.db_data["guildmembers"].get(
         current_user,
@@ -423,27 +351,92 @@ else:
     # ── 왼쪽 컬럼 ──
     with col_left:
         with st.container(border=True):
-            st.markdown(f"<div class='section-title'>👤 현재 <span style='color:#38bdf8;'>{current_user}</span> 님의 정보</div>", unsafe_allow_html=True)
-            btn1, btn2, btn3 = st.columns(3)
-            with btn1:
-                if st.button("✏️ 닉네임", use_container_width=True):
-                    st.session_state.show_nick_editor = not st.session_state.get("show_nick_editor", False)
-            with btn2:
-                if st.button("🚪 로그아웃", use_container_width=True):
-                    st.session_state.logged_in = False
-                    st.session_state.login_user = ""
-                    try:
-                        controller.remove('saved_user_id')
-                    except:
-                        pass
-                    st.rerun()
-            with btn3:
-                if st.button("🔄 새로고침", use_container_width=True):
-                    m_df = load_sheet_data("guildmembers")
-                    f_df = load_sheet_data("guild_finance")
-                    st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
-                    st.session_state.auction_items = load_auction_from_sheet()
-                    st.rerun()
+            if not st.session_state.logged_in:
+                # 로그인/회원가입 폼
+                login_bg = "#0095ff" if st.session_state.auth_mode == "login" else "#1a2333"
+                reg_bg = "#0095ff" if st.session_state.auth_mode == "register" else "#1a2333"
+                st.markdown(f"<style>.auth-btn-login button{{background:{login_bg} !important;color:#fff !important;border:none !important;font-weight:800 !important;}}.auth-btn-register button{{background:{reg_bg} !important;color:#fff !important;border:none !important;font-weight:800 !important;}}</style>", unsafe_allow_html=True)
+                ab1, ab2 = st.columns(2)
+                with ab1:
+                    st.markdown("<div class='auth-btn-login'>", unsafe_allow_html=True)
+                    if st.button("🔐 로그인", key="mode_login", use_container_width=True):
+                        st.session_state.auth_mode = "login"
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
+                with ab2:
+                    st.markdown("<div class='auth-btn-register'>", unsafe_allow_html=True)
+                    if st.button("📝 회원가입", key="mode_register", use_container_width=True):
+                        st.session_state.auth_mode = "register"
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
+                st.write("")
+                if st.session_state.auth_mode == "login":
+                    input_id = st.text_input("ID", placeholder="길드원 계정명 입력", key="login_id")
+                    input_pw = st.text_input("PASSWORD", type="password", placeholder="비밀번호 입력", key="login_pw")
+                    if st.button("로그인", use_container_width=True):
+                        if input_id in st.session_state.db_data["guildmembers"]:
+                            if st.session_state.db_data["guildmembers"][input_id]["password"] == input_pw:
+                                st.session_state.logged_in = True
+                                st.session_state.login_user = input_id
+                                controller.set('saved_user_id', input_id)
+                                st.rerun()
+                            else: st.error("❌ 비밀번호 오류")
+                        else: st.error("❌ 미등록 계정")
+                    col_spacer, col_quick = st.columns([3, 2])
+                    with col_quick:
+                        quick_pw = st.text_input("Master", type="password", placeholder="마스터 비번", label_visibility="collapsed")
+                        if quick_pw == "1234":
+                            if "마스터" not in st.session_state.db_data["guildmembers"]:
+                                st.session_state.db_data["guildmembers"]["마스터"] = {
+                                    "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
+                                    "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
+                                    "attendance":{"레기카":False,"시온":False,"플라우드":False}
+                                }
+                            st.session_state.logged_in = True
+                            st.session_state.login_user = "마스터"
+                            st.rerun()
+                else:
+                    reg_id = st.text_input("인게임 닉네임", key="reg_id")
+                    reg_pw = st.text_input("새 비밀번호", type="password", key="reg_pw")
+                    reg_pw_confirm = st.text_input("비밀번호 확인", type="password", key="reg_pw_confirm")
+                    if st.button("가입하기", use_container_width=True):
+                        if reg_pw != reg_pw_confirm:
+                            st.error("비밀번호가 일치하지 않아요!")
+                        elif reg_id in st.session_state.db_data["guildmembers"]:
+                            st.error("이미 존재하는 아이디예요!")
+                        else:
+                            new_member = {
+                                "password":reg_pw,"gold":0,"atk":0,"def":0,"hit":0,"power":0,
+                                "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
+                                "attendance":{"레기카":False,"시온":False,"플라우드":False},
+                                "job":"-"
+                            }
+                            st.session_state.db_data["guildmembers"][reg_id] = new_member
+                            if save_member_to_sheet(reg_id, new_member):
+                                st.success("가입 완료! ✅")
+            else:
+                # 로그인 후 계정 정보
+                st.markdown(f"<div class='section-title'>👤 현재 <span style='color:#38bdf8;'>{current_user}</span> 님의 정보</div>", unsafe_allow_html=True)
+                btn1, btn2, btn3 = st.columns(3)
+                with btn1:
+                    if st.button("✏️ 닉네임", use_container_width=True):
+                        st.session_state.show_nick_editor = not st.session_state.get("show_nick_editor", False)
+                with btn2:
+                    if st.button("🚪 로그아웃", use_container_width=True):
+                        st.session_state.logged_in = False
+                        st.session_state.login_user = ""
+                        try:
+                            controller.remove('saved_user_id')
+                        except:
+                            pass
+                        st.rerun()
+                with btn3:
+                    if st.button("🔄 새로고침", use_container_width=True):
+                        m_df = load_sheet_data("guildmembers")
+                        f_df = load_sheet_data("guild_finance")
+                        st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
+                        st.session_state.auction_items = load_auction_from_sheet()
+                        st.rerun()
             if st.session_state.get("show_nick_editor", False):
                 st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:12px;margin-top:4px;'>", unsafe_allow_html=True)
                 new_nick = st.text_input("새 닉네임 입력", key="new_nick_input")
