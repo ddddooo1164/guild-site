@@ -605,6 +605,7 @@ with master_top_col:
                 }
             st.session_state.logged_in = True
             st.session_state.login_user = "마스터"
+            st.session_state.balance_cache = get_balance("마스터")
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
