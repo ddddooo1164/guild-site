@@ -667,6 +667,7 @@ if True:
             with c1:
                 st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
                 st.markdown(f"<div class='stat-val blue-txt'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
+                st.markdown("<style>div[data-testid='stHorizontalBlock'] div.stButton button{height:42px !important;white-space:nowrap !important;}</style>", unsafe_allow_html=True)
                 tw1, tw2 = st.columns(2)
                 with tw1:
                     st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
