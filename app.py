@@ -682,6 +682,7 @@ if True:
                     if st.button("🚪 로그아웃", use_container_width=True):
                         st.session_state.logged_in = False
                         st.session_state.login_user = ""
+                        st.session_state.balance_cache = 0
                         try:
                             controller.remove('saved_user_id')
                         except:
@@ -728,8 +729,8 @@ if True:
             my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
             # 잔액 캐시 (새로고침 버튼 누를 때만 갱신)
             if "balance_cache" not in st.session_state:
-                st.session_state.balance_cache = get_balance(current_user)
-            my_balance = st.session_state.balance_cache
+                st.session_state.balance_cache = get_balance(current_user) if st.session_state.logged_in else 0
+            my_balance = st.session_state.balance_cache if st.session_state.logged_in else 0
             st.markdown(
                 f"<table style='width:100%;border-collapse:collapse;margin-bottom:12px;'>"
                 f"<tr>"
