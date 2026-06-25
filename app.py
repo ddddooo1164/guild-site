@@ -1326,7 +1326,10 @@ if True:
             # 마감 체크 (세션 시작 시간은 세션에 저장)
             if attend_active and attend_session_id:
                 if "attend_start_time" not in st.session_state or st.session_state.get("attend_session_id") != attend_session_id:
-                    st.session_state.attend_start_time = now_kst
+                    try:
+                        st.session_state.attend_start_time = datetime.strptime(attend_session_id, "%Y-%m-%d %H:%M:%S").replace(tzinfo=KST)
+                    except:
+                        st.session_state.attend_start_time = now_kst
                     st.session_state.attend_session_id = attend_session_id
                 elapsed = (now_kst - st.session_state.attend_start_time).total_seconds()
                 if elapsed >= 600:
