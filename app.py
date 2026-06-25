@@ -41,9 +41,21 @@ def load_sheet_data(sheet_name):
         return pd.DataFrame()
 
 
+def retry_api(func, *args, max_retry=3, **kwargs):
+    """API 호출 실패 시 재시도"""
+    import time
+    for attempt in range(max_retry):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            if attempt < max_retry - 1:
+                time.sleep(1.5)
+            else:
+                raise e
+
 def save_member_to_sheet(name, member_data):
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         ws = sh.worksheet("guildmembers")
         all_values = ws.get_all_values()
@@ -80,7 +92,7 @@ def save_member_to_sheet(name, member_data):
 
 def save_auction_to_sheet(auction_items):
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         try:
             ws = sh.worksheet("auction_items")
@@ -110,7 +122,7 @@ def save_auction_to_sheet(auction_items):
 
 def save_finance_to_sheet(finance):
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         try:
             ws = sh.worksheet("guild_finance")
@@ -129,7 +141,7 @@ def save_finance_to_sheet(finance):
 def save_attend_status(active, session_id, boss_score, attendees):
     """출석 상태를 시트에 저장"""
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         try:
             ws = sh.worksheet("attend_status")
@@ -169,7 +181,7 @@ def load_attend_status():
 
 def save_attendance_log(session_time, attendees, boss_score=0):
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         try:
             ws = sh.worksheet("attendance_log")
@@ -228,7 +240,7 @@ def get_attendance_scores():
 def save_settlement_log(settlement_time, scores, total_pool, distributions):
     """정산 기록 settlement_log 탭에 저장"""
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         try:
             ws = sh.worksheet("settlement_log")
@@ -248,7 +260,7 @@ def save_settlement_log(settlement_time, scores, total_pool, distributions):
 def clear_attendance_log():
     """attendance_log 초기화 (헤더만 남김)"""
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         ws = sh.worksheet("attendance_log")
         ws.clear()
@@ -272,7 +284,7 @@ def load_settlement_log():
 def save_transaction(name, amount, t_type, memo=""):
     """입출금 내역 저장 (t_type: '입금' or '출금')"""
     try:
-        client = get_gspread_client()
+        client = retry_api(get_gspread_client)
         sh = client.open_by_key(SHEET_ID)
         try:
             ws = sh.worksheet("transactions")
