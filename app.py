@@ -581,8 +581,9 @@ else:
             # 정렬 버튼 한 줄
             sc1,sc2,sc3,sc4,sc5,sc6,sc7 = st.columns(7)
             with sc1:
-                if st.button(f"직업{get_sort_arrow('job')}", key="sort_job", use_container_width=True):
-                    sort_members("job"); st.rerun()
+                if st.button(f"직업 🔍", key="sort_job", use_container_width=True):
+                    st.session_state.show_job_filter = not st.session_state.get("show_job_filter", False)
+                    st.rerun()
             with sc2:
                 if st.button(f"공격{get_sort_arrow('atk')}", key="sort_atk", use_container_width=True):
                     sort_members("atk"); st.rerun()
@@ -604,6 +605,27 @@ else:
                     st.session_state.sort_asc = False
                     st.rerun()
 
+            # 직업 필터 창
+            if st.session_state.get("show_job_filter", False):
+                job_list_all = ["전체", "뱅가드","버서커","디스트","레인저","엘리","디바인","어쌔신","데브","건슬","워로드"]
+                selected_filter = st.session_state.get("job_filter", "전체")
+                st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:10px;margin-top:4px;'>", unsafe_allow_html=True)
+                st.markdown("<span style='font-size:0.8rem;color:#ffffff;'>직업 선택</span>", unsafe_allow_html=True)
+                jf_cols = st.columns(6)
+                for ji, jname in enumerate(job_list_all):
+                    with jf_cols[ji % 6]:
+                        is_sel = selected_filter == jname
+                        bg = "#0095ff" if is_sel else "#2e3d56"
+                        st.markdown(f"<div style='background:{bg};color:#ffffff;border:1px solid {'#0095ff' if is_sel else '#3e4d66'};border-radius:6px;padding:4px;text-align:center;font-size:0.75rem;font-weight:700;margin-bottom:4px;'>{jname}</div>", unsafe_allow_html=True)
+                        if st.button(jname, key=f"jf_{ji}", use_container_width=True):
+                            st.session_state.job_filter = jname
+                            st.session_state.show_job_filter = False
+                            st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            # 직업 필터 적용
+            job_filter = st.session_state.get("job_filter", "전체")
+
             # 정렬 적용
             def get_sort_val(item):
                 if st.session_state.sort_col == 'job':
@@ -619,6 +641,8 @@ else:
                 key=get_sort_val,
                 reverse=not st.session_state.sort_asc
             )
+            if job_filter != "전체":
+                sorted_members = [(n, d) for n, d in sorted_members if d.get('job', '-') == job_filter]
             crown_icons = {0: "👑", 1: "🥈", 2: "🥉"}
             for rank, (name, m_data) in enumerate(sorted_members):
                 t_val = str(m_data.get('updated_at', '-'))
