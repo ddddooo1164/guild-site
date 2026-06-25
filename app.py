@@ -448,13 +448,14 @@ def finalize_auction(item, db_data):
     item["bidder"] = best
     return item
 
+m_df = load_sheet_data("guildmembers")
+f_df = load_sheet_data("guild_finance")
 if "db_data" not in st.session_state:
-    m_df = load_sheet_data("guildmembers")
-    f_df = load_sheet_data("guild_finance")
+    st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
+else:
     st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
 
-if "auction_items" not in st.session_state:
-    st.session_state.auction_items = load_auction_from_sheet()
+st.session_state.auction_items = load_auction_from_sheet()
 
 # 마감된 아이템 자동 낙찰 처리
 changed = False
