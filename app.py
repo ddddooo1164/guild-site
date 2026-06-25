@@ -1364,8 +1364,8 @@ if True:
             # 출석자 리스트
             if attend_list:
                 st.markdown("<div style='border-top:1px solid #1e293b;margin:10px 0;'></div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-bottom:6px;'>출석 인원: {len(st.session_state.attend_list)}명</div>", unsafe_allow_html=True)
-                for idx, (aname, atime) in enumerate(st.session_state.attend_list.items()):
+                st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-bottom:6px;'>출석 인원: {len(attend_list)}명</div>", unsafe_allow_html=True)
+                for idx, (aname, atime) in enumerate(attend_list.items()):
                     st.markdown(
                         f"<div style='font-size:0.8rem;padding:4px 0;color:#ffffff;border-bottom:1px solid #1e293b;'>"
                         f"<span style='color:#38bdf8;font-weight:700;'>{idx+1}. {aname}</span>"
