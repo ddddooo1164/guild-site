@@ -1021,16 +1021,20 @@ if True:
 
             if is_master:
                 if not st.session_state.attend_active:
+                    boss_score = st.number_input("보스 점수", min_value=0, step=1, key="boss_score_input")
                     if st.button("🟢 출석 시작", use_container_width=True):
                         st.session_state.attend_active = True
                         st.session_state.attend_start_time = now_kst
                         st.session_state.attend_session_id = now_kst.strftime("%Y-%m-%d %H:%M:%S")
+                        st.session_state.attend_boss_score = boss_score
                         st.session_state.attend_list = {}
                         st.rerun()
                 else:
                     remaining = max(0, 600 - int((now_kst - st.session_state.attend_start_time).total_seconds()))
                     mins, secs = divmod(remaining, 60)
-                    st.markdown(f"<div style='color:#4ade80;font-weight:700;font-size:0.9rem;margin-bottom:8px;'>⏱ 출석 진행 중 {mins}:{secs:02d} 남음</div>", unsafe_allow_html=True)
+                    boss_score_display = st.session_state.get("attend_boss_score", 0)
+                    st.markdown(f"<div style='color:#4ade80;font-weight:700;font-size:0.9rem;margin-bottom:4px;'>⏱ 출석 진행 중 {mins}:{secs:02d} 남음</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='color:#f59e0b;font-size:0.8rem;margin-bottom:8px;'>⚔️ 보스 점수: {boss_score_display}점</div>", unsafe_allow_html=True)
                     if st.button("🔴 출석 강제 종료", use_container_width=True):
                         save_attendance_log(
                             st.session_state.attend_session_id,
