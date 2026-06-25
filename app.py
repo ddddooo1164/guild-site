@@ -663,24 +663,26 @@ if True:
                 st.markdown("</div>", unsafe_allow_html=True)
 
 
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val blue-txt' style='margin-bottom:24px;'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
-            with c2:
-                my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
-                st.markdown("<span style='font-size:13px;'>참여도</span>", unsafe_allow_html=True)
-                st.markdown(
-                    f"<div style='font-size:0.82rem;color:#c084fc;font-weight:700;margin-top:4px;line-height:1.8;'>"
-                    f"기여도: {my_contribution}%<br>참여도: {my_attend_rate}%"
-                    f"</div>",
-                    unsafe_allow_html=True
-                )
-            with c3:
-                st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val green-txt' style='margin-bottom:24px;'>{member_info['power']:,}</div>", unsafe_allow_html=True)
+            my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
+            st.markdown(
+                f"<table style='width:100%;border-collapse:collapse;margin-bottom:12px;'>"
+                f"<tr>"
+                f"<td style='width:33%;padding:4px;'><span style='font-size:13px;color:#ffffff;'>예상 분배금</span></td>"
+                f"<td style='width:33%;padding:4px;'><span style='font-size:13px;color:#ffffff;'>참여도</span></td>"
+                f"<td style='width:33%;padding:4px;'><span style='font-size:13px;color:#ffffff;'>현재 전투력</span></td>"
+                f"</tr>"
+                f"<tr>"
+                f"<td style='padding:4px;'><span style='font-size:1.5rem;font-weight:700;color:#38bdf8;'>{member_info['gold']:,} 💎</span></td>"
+                f"<td style='padding:4px;'>"
+                f"<span style='font-size:0.82rem;color:#c084fc;font-weight:700;'>기여도: {my_contribution}%</span><br>"
+                f"<span style='font-size:0.82rem;color:#c084fc;font-weight:700;'>참여도: {my_attend_rate}%</span>"
+                f"</td>"
+                f"<td style='padding:4px;'><span style='font-size:1.5rem;font-weight:700;color:#4ade80;'>{member_info['power']:,}</span></td>"
+                f"</tr>"
+                f"</table>",
+                unsafe_allow_html=True
+            )
 
-            # 버튼 한 줄
             b1, b2, b3 = st.columns(3)
             with b1:
                 st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
