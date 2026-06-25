@@ -76,7 +76,7 @@ def save_member_to_sheet(name, member_data):
         new_row = [str(new_row_data.get(h, '')) for h in headers]
         cell = ws.find(name)
         if cell:
-            ws.update(f"A{cell.row}", [new_row])
+            ws.update([new_row], f"A{cell.row}")
         else:
             ws.append_row(new_row)
         return True
@@ -94,7 +94,7 @@ def save_auction_to_sheet(auction_items):
         except:
             ws = sh.add_worksheet(title="auction_items", rows="100", cols="10")
         headers = ["name", "boss", "price", "status", "bidder", "bidders", "registered_at", "deadline"]
-        ws.update("A1", [headers])
+        ws.update([headers], "A1")
         rows = []
         for item in auction_items:
             rows.append([
@@ -108,7 +108,7 @@ def save_auction_to_sheet(auction_items):
                 item.get("deadline", ""),
             ])
         if rows:
-            ws.update("A2", rows)
+            ws.update(rows, "A2")
         return True
     except Exception as e:
         st.error(f"입찰 시트 저장 실패: {e}")
@@ -123,10 +123,10 @@ def save_finance_to_sheet(finance):
             ws.clear()
         except:
             ws = sh.add_worksheet(title="guild_finance", rows="20", cols="2")
-        ws.update("A1", [["category", "amount"]])
+        ws.update([["category", "amount"]], "A1")
         rows = [[k, v] for k, v in finance.items()]
         if rows:
-            ws.update("A2", rows)
+            ws.update(rows, "A2")
         return True
     except Exception as e:
         st.error(f"자산 시트 저장 실패: {e}")
@@ -142,13 +142,13 @@ def save_attend_status(active, session_id, boss_score, attendees):
             ws.clear()
         except:
             ws = sh.add_worksheet(title="attend_status", rows="5", cols="4")
-        ws.update("A1", [["active", "session_id", "boss_score", "attendees"]])
-        ws.update("A2", [[
+        ws.update([["active", "session_id", "boss_score", "attendees"]], "A1")
+        ws.update([[
             str(active),
             session_id or "",
             boss_score or 0,
             ",".join(attendees.keys()) if attendees else ""
-        ]])
+        ]], "A2")
         return True
     except Exception as e:
         st.error(f"출석 상태 저장 실패: {e}")
@@ -181,7 +181,7 @@ def save_attendance_log(session_time, attendees, boss_score=0):
             ws = sh.worksheet("attendance_log")
         except:
             ws = sh.add_worksheet(title="attendance_log", rows="1000", cols="4")
-            ws.update("A1", [["session_time", "boss_score", "name", "checked_at"]])
+            ws.update([["session_time", "boss_score", "name", "checked_at"]], "A1")
         for name, checked_at in attendees.items():
             ws.append_row([session_time, boss_score, name, checked_at])
         return True
@@ -240,7 +240,7 @@ def save_settlement_log(settlement_time, scores, total_pool, distributions):
             ws = sh.worksheet("settlement_log")
         except:
             ws = sh.add_worksheet(title="settlement_log", rows="1000", cols="5")
-            ws.update("A1", [["settlement_time", "name", "score", "ratio", "gold_given"]])
+            ws.update([["settlement_time", "name", "score", "ratio", "gold_given"]], "A1")
         for name, score in scores.items():
             total_score = sum(scores.values())
             ratio = round(score / total_score * 100, 2) if total_score > 0 else 0
@@ -258,7 +258,7 @@ def clear_attendance_log():
         sh = client.open_by_key(SHEET_ID)
         ws = sh.worksheet("attendance_log")
         ws.clear()
-        ws.update("A1", [["session_time", "boss_score", "name", "checked_at"]])
+        ws.update([["session_time", "boss_score", "name", "checked_at"]], "A1")
         return True
     except Exception as e:
         st.error(f"출석 기록 초기화 실패: {e}")
@@ -289,7 +289,7 @@ def save_transaction(name, amount, t_type, memo=""):
             ws = sh.worksheet("transactions")
         except:
             ws = sh.add_worksheet(title="transactions", rows="1000", cols="5")
-            ws.update("A1", [["time", "name", "type", "amount", "memo"]])
+            ws.update([["time", "name", "type", "amount", "memo"]], "A1")
         now_str = datetime.now(ZoneInfo('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         ws.append_row([now_str, name, t_type, amount, memo])
         return True
