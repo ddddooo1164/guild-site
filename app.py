@@ -579,7 +579,7 @@ else:
                 return " ⇅"
 
             # 정렬 버튼 한 줄
-            sc1,sc2,sc3,sc4,sc5,sc6 = st.columns(6)
+            sc1,sc2,sc3,sc4,sc5,sc6,sc7 = st.columns(7)
             with sc1:
                 if st.button(f"직업{get_sort_arrow('job')}", key="sort_job", use_container_width=True):
                     sort_members("job"); st.rerun()
@@ -598,10 +598,11 @@ else:
             with sc6:
                 if st.button(f"갱신{get_sort_arrow('updated_at')}", key="sort_time", use_container_width=True):
                     sort_members("updated_at"); st.rerun()
-            if st.button("🔄 기본값", key="sort_reset", use_container_width=True):
-                st.session_state.sort_col = "power"
-                st.session_state.sort_asc = False
-                st.rerun()
+            with sc7:
+                if st.button("🔄", key="sort_reset", use_container_width=True):
+                    st.session_state.sort_col = "power"
+                    st.session_state.sort_asc = False
+                    st.rerun()
 
             # 정렬 적용
             def get_sort_val(item):
