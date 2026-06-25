@@ -670,7 +670,7 @@ if True:
                 tw1, tw2 = st.columns(2)
                 with tw1:
                     st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
-                    if st.button("💸 출금 신청", use_container_width=True):
+                    if st.button("💸 출금", use_container_width=True):
                         prev_gold = st.session_state.db_data["guildmembers"][current_user].get("gold", 0)
                         st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
                         save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
