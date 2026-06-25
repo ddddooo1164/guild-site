@@ -1250,6 +1250,8 @@ if True:
                             if name in st.session_state.db_data["guildmembers"]:
                                 st.session_state.db_data["guildmembers"][name]["gold"] =                                     st.session_state.db_data["guildmembers"][name].get("gold", 0) + gold
                                 save_member_to_sheet(name, st.session_state.db_data["guildmembers"][name])
+                                if gold > 0:
+                                    save_transaction(name, gold, "입금", f"참여분배 정산 ({now_str})")
                         # 참여분배금 0으로 초기화
                         finance = st.session_state.db_data.get("guild_finance", {})
                         finance["attend_dist"] = 0
