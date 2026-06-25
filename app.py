@@ -32,10 +32,15 @@ def get_gspread_client():
 
 def load_sheet_data(sheet_name):
     try:
-        import pandas as pd
-        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
-        df = pd.read_csv(url)
-        return df
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        ws = sh.worksheet(sheet_name)
+        all_values = ws.get_all_values()
+        if not all_values:
+            return pd.DataFrame()
+        headers = all_values[0]
+        rows = all_values[1:]
+        return pd.DataFrame(rows, columns=headers)
     except Exception as e:
         st.error(f"시트 로드 실패 ({sheet_name}): {e}")
         return pd.DataFrame()
