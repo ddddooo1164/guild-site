@@ -32,20 +32,14 @@ def get_gspread_client():
 
 def load_sheet_data(sheet_name):
     try:
-        client = get_gspread_client()
-        sh = client.open_by_key(SHEET_ID)
-        ws = sh.worksheet(sheet_name)
-        all_values = ws.get_all_values()
-        if not all_values or len(all_values) < 2:
-            return pd.DataFrame()
-        headers = [str(h).strip().lower() for h in all_values[0]]
-        rows = all_values[1:]
-        df = pd.DataFrame(rows, columns=headers)
-        df = df.replace('', pd.NA).dropna(how='all', axis=0).fillna('')
+        import pandas as pd
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
+        df = pd.read_csv(url)
         return df
     except Exception as e:
         st.error(f"시트 로드 실패 ({sheet_name}): {e}")
         return pd.DataFrame()
+
 
 def save_member_to_sheet(name, member_data):
     try:
@@ -266,17 +260,12 @@ def clear_attendance_log():
 
 def load_settlement_log():
     try:
-        client = get_gspread_client()
-        sh = client.open_by_key(SHEET_ID)
-        try:
-            ws = sh.worksheet("settlement_log")
-            all_values = ws.get_all_values()
-            if len(all_values) < 2:
-                return []
-            headers = all_values[0]
-            return [dict(zip(headers, row)) for row in all_values[1:]]
-        except:
+        import pandas as pd
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=settlement_log"
+        df = pd.read_csv(url)
+        if df.empty:
             return []
+        return df.to_dict('records')
     except:
         return []
 
@@ -298,16 +287,15 @@ def save_transaction(name, amount, t_type, memo=""):
         return False
 
 def load_my_transactions(name):
-    """개인 입출금 내역 로드"""
+    """개인 입출금 내역 로드 (CSV URL)"""
     try:
-        client = get_gspread_client()
-        sh = client.open_by_key(SHEET_ID)
-        ws = sh.worksheet("transactions")
-        all_values = ws.get_all_values()
-        if len(all_values) < 2:
+        import pandas as pd
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=transactions"
+        df = pd.read_csv(url)
+        if df.empty:
             return []
-        headers = all_values[0]
-        return [dict(zip(headers, row)) for row in all_values[1:] if len(row) > 1 and row[1] == name]
+        df = df[df['name'].astype(str) == str(name)]
+        return df.to_dict('records')
     except:
         return []
 
