@@ -333,26 +333,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
-st.markdown("""<style>
-div[data-testid="stTextInput"]:has(input[placeholder="마스터"]) {
-    position: fixed; top: 12px; right: 16px; width: 120px; z-index: 9999;
-}
-div[data-testid="stTextInput"]:has(input[placeholder="마스터"]) input {
-    font-size: 0.75rem !important; padding: 4px 8px !important; height: 32px !important;
-}
-</style>""", unsafe_allow_html=True)
-quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
-if quick_pw_top == "1234":
-    if "마스터" not in st.session_state.db_data["guildmembers"]:
-        st.session_state.db_data["guildmembers"]["마스터"] = {
-            "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
-            "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
-            "attendance":{"레기카":False,"시온":False,"플라우드":False}
-        }
-    st.session_state.logged_in = True
-    st.session_state.login_user = "마스터"
-    st.rerun()
+t1, t2, t3 = st.columns([3, 3, 1])
+with t2:
+    st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
+with t3:
+    st.markdown("<div style='padding-top:8px;'>", unsafe_allow_html=True)
+    quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
+    st.markdown("</div>", unsafe_allow_html=True)
+    if quick_pw_top == "1234":
+        if "마스터" not in st.session_state.db_data["guildmembers"]:
+            st.session_state.db_data["guildmembers"]["마스터"] = {
+                "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
+                "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
+                "attendance":{"레기카":False,"시온":False,"플라우드":False}
+            }
+        st.session_state.logged_in = True
+        st.session_state.login_user = "마스터"
+        st.rerun()
 
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
