@@ -298,19 +298,15 @@ def save_transaction(name, amount, t_type, memo=""):
         return False
 
 def load_my_transactions(name):
-    """개인 입출금 내역 로드"""
+    """개인 입출금 내역 로드 (CSV URL 방식)"""
     try:
-        client = get_gspread_client()
-        sh = client.open_by_key(SHEET_ID)
-        try:
-            ws = sh.worksheet("transactions")
-            all_values = ws.get_all_values()
-            if len(all_values) < 2:
-                return []
-            headers = all_values[0]
-            return [dict(zip(headers, row)) for row in all_values[1:] if row[1] == name]
-        except:
+        import pandas as pd
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=transactions"
+        df = pd.read_csv(url)
+        if df.empty:
             return []
+        df = df[df['name'].astype(str) == name]
+        return df.to_dict('records')
     except:
         return []
 
@@ -730,12 +726,7 @@ if True:
 
 
             my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
-            # 잔액 캐시 (로그인 유저가 바뀌면 갱신)
-            if st.session_state.logged_in:
-                if st.session_state.get("balance_cache_user") != current_user:
-                    st.session_state.balance_cache = get_balance(current_user)
-                    st.session_state.balance_cache_user = current_user
-            my_balance = st.session_state.get("balance_cache", 0) if st.session_state.logged_in else 0
+            my_balance = get_balance(current_user) if st.session_state.logged_in else 0
             st.markdown(
                 f"<table style='width:100%;border-collapse:collapse;margin-bottom:12px;'>"
                 f"<tr>"
