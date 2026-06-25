@@ -1303,8 +1303,18 @@ if True:
 
             now_kst = datetime.now(KST)
 
+
             # 시트에서 출석 상태 로드
             attend_active, attend_session_id, attend_boss_score, attend_list = load_attend_status()
+
+            # 출석 진행 중일 때 자동 갱신
+            if attend_active:
+                import time
+                refresh_interval = 1 if is_master else 10
+                last_refresh = st.session_state.get("attend_last_refresh", 0)
+                if time.time() - last_refresh >= refresh_interval:
+                    st.session_state.attend_last_refresh = time.time()
+                    st.rerun()
 
             # 마감 체크 (세션 시작 시간은 세션에 저장)
             if attend_active and attend_session_id:
