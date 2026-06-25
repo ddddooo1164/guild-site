@@ -368,7 +368,7 @@ st.markdown("""
 
 # 타이틀은 전체 폭으로 가운데 정렬, 마스터는 absolute로 오른쪽에
 st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
-_, master_top_col = st.columns([6, 1])
+_, master_top_col = st.columns([8, 1])
 with master_top_col:
     st.markdown("<div style='margin-top:-58px;'>", unsafe_allow_html=True)
     quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
