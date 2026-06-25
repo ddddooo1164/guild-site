@@ -683,24 +683,20 @@ if True:
                 unsafe_allow_html=True
             )
 
-            b1, b2, b3 = st.columns(3)
-            with b1:
-                st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
-                if st.button("💸 출금 신청", use_container_width=True):
-                    prev_gold = st.session_state.db_data["guildmembers"][current_user].get("gold", 0)
-                    st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
-                    save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
-                    save_transaction(current_user, prev_gold, "출금", "출금 신청")
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-            with b2:
-                if st.button("📒 입출금 내역", use_container_width=True, key="tx_btn_c2"):
-                    st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
-            with b3:
-                st.markdown("<div class='stButton-refresh'>", unsafe_allow_html=True)
-                if st.button("⚡ 투력 최신화", use_container_width=True):
-                    st.session_state.show_power_editor = not st.session_state.get("show_power_editor", False)
-                st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
+            if st.button("💸 출금 신청", use_container_width=True):
+                prev_gold = st.session_state.db_data["guildmembers"][current_user].get("gold", 0)
+                st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
+                save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
+                save_transaction(current_user, prev_gold, "출금", "출금 신청")
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+            if st.button("📒 입출금 내역", use_container_width=True, key="tx_btn_c2"):
+                st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
+            st.markdown("<div class='stButton-refresh'>", unsafe_allow_html=True)
+            if st.button("⚡ 투력 최신화", use_container_width=True):
+                st.session_state.show_power_editor = not st.session_state.get("show_power_editor", False)
+            st.markdown("</div>", unsafe_allow_html=True)
 
             # 입출금 내역
             if st.session_state.get("show_transactions", False):
