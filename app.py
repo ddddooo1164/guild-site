@@ -576,7 +576,7 @@ else:
             def get_sort_arrow(col):
                 if st.session_state.sort_col == col:
                     return " ▲" if st.session_state.sort_asc else " ▼"
-                return " ⇅"
+                return " ▼"
 
             # 정렬 버튼 한 줄
             sc1,sc2,sc3,sc4,sc5,sc6,sc7 = st.columns(7)
