@@ -155,20 +155,20 @@ def save_attend_status(active, session_id, boss_score, attendees):
         return False
 
 def load_attend_status():
-    """시트에서 출석 상태 로드"""
+    """시트에서 출석 상태 로드 (CSV URL 사용으로 API 절약)"""
     try:
-        client = get_gspread_client()
-        sh = client.open_by_key(SHEET_ID)
-        ws = sh.worksheet("attend_status")
-        all_values = ws.get_all_values()
-        if len(all_values) < 2:
+        import pandas as pd
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=attend_status"
+        df = pd.read_csv(url)
+        if df.empty or len(df) < 1:
             return False, None, 0, {}
-        row = all_values[1]
-        active = row[0].upper() == "TRUE"
-        session_id = row[1]
-        try: boss_score = int(row[2])
+        row = df.iloc[0]
+        active = str(row.get("active", "False")).upper() == "TRUE"
+        session_id = str(row.get("session_id", ""))
+        try: boss_score = int(row.get("boss_score", 0))
         except: boss_score = 0
-        attendees = {n: "" for n in row[3].split(",") if n} if row[3] else {}
+        attendees_str = str(row.get("attendees", ""))
+        attendees = {n: "" for n in attendees_str.split(",") if n and n != "nan"} if attendees_str else {}
         return active, session_id, boss_score, attendees
     except:
         return False, None, 0, {}
@@ -599,7 +599,7 @@ if not st.session_state.get("just_started_attend", False):
         _attend_active, _, _, _ = load_attend_status()
         if _attend_active:
             _is_master = st.session_state.get("login_user", "") == "마스터"
-            _interval = 1 if _is_master else 10
+            _interval = 3 if _is_master else 15
             _last = st.session_state.get("attend_last_refresh", 0)
             if time.time() - _last >= _interval:
                 st.session_state.attend_last_refresh = time.time()
