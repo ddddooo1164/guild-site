@@ -30,6 +30,7 @@ def get_gspread_client():
         creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
     return gspread.authorize(creds)
 
+@st.cache_data(ttl=5)
 def load_sheet_data(sheet_name):
     try:
         client = get_gspread_client()
@@ -154,6 +155,7 @@ def save_attend_status(active, session_id, boss_score, attendees):
         st.error(f"출석 상태 저장 실패: {e}")
         return False
 
+@st.cache_data(ttl=3)
 def load_attend_status():
     """시트에서 출석 상태 로드"""
     try:
@@ -206,6 +208,7 @@ def load_attendance_log():
     except:
         return []
 
+@st.cache_data(ttl=10)
 def get_attendance_scores():
     """attendance_log에서 현재 사이클 점수 합산"""
     try:
@@ -314,6 +317,7 @@ def load_my_transactions(name):
     except:
         return []
 
+@st.cache_data(ttl=10)
 def get_my_attendance_stats(my_name):
     """나의 기여도 및 보스 참여도 계산"""
     try:
