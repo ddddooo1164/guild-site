@@ -833,6 +833,118 @@ if True:
                 st.markdown("</div>", unsafe_allow_html=True)
 
 
+        with st.container(border=True):
+            st.markdown("<div class='section-title'>📋 길드원 리스트 스펙 현황</div>", unsafe_allow_html=True)
+
+            if "sort_col" not in st.session_state:
+                st.session_state.sort_col = "power"
+                st.session_state.sort_asc = False
+
+            def sort_members(col):
+                if st.session_state.sort_col == col:
+                    st.session_state.sort_asc = not st.session_state.sort_asc
+                else:
+                    st.session_state.sort_col = col
+                    st.session_state.sort_asc = False
+
+            def get_sort_arrow(col):
+                if st.session_state.sort_col == col:
+                    return " ▲" if st.session_state.sort_asc else " ▼"
+                return " ▼"
+
+            sc1,sc2,sc3,sc4,sc5,sc6,sc7 = st.columns(7)
+            with sc1:
+                if st.button(f"직업 🔍", key="sort_job", use_container_width=True):
+                    st.session_state.show_job_filter = not st.session_state.get("show_job_filter", False)
+            with sc2:
+                if st.button(f"공격{get_sort_arrow('atk')}", key="sort_atk", use_container_width=True):
+                    sort_members("atk"); st.rerun()
+            with sc3:
+                if st.button(f"방어{get_sort_arrow('def')}", key="sort_def", use_container_width=True):
+                    sort_members("def"); st.rerun()
+            with sc4:
+                if st.button(f"명중{get_sort_arrow('hit')}", key="sort_hit", use_container_width=True):
+                    sort_members("hit"); st.rerun()
+            with sc5:
+                if st.button(f"총합{get_sort_arrow('power')}", key="sort_power", use_container_width=True):
+                    sort_members("power"); st.rerun()
+            with sc6:
+                if st.button(f"갱신{get_sort_arrow('updated_at')}", key="sort_time", use_container_width=True):
+                    sort_members("updated_at"); st.rerun()
+            with sc7:
+                if st.button("🔄", key="sort_reset", use_container_width=True):
+                    st.session_state.sort_col = "power"
+                    st.session_state.sort_asc = False
+                    st.rerun()
+
+            if st.session_state.get("show_job_filter", False):
+                job_list_all = ["전체", "뱅가드","버서커","디스트","레인저","엘리","디바인","어쌔신","데브","건슬","워로드"]
+                st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:10px;margin-top:4px;'>", unsafe_allow_html=True)
+                st.markdown("<span style='font-size:0.8rem;color:#ffffff;'>직업 선택</span>", unsafe_allow_html=True)
+                jf_cols = st.columns(6)
+                for ji, jname in enumerate(job_list_all):
+                    with jf_cols[ji % 6]:
+                        if st.button(jname, key=f"jf_{ji}", use_container_width=True):
+                            st.session_state.job_filter = jname
+                            st.session_state.show_job_filter = False
+                            st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            job_filter = st.session_state.get("job_filter", "전체")
+
+            def get_sort_val(item):
+                if st.session_state.sort_col == 'job':
+                    return (str(item[1].get('job', '')), -int(item[1].get('power', 0)))
+                val = item[1].get(st.session_state.sort_col, '')
+                if st.session_state.sort_col in ['atk','def','hit','power','gold']:
+                    try: return int(val)
+                    except: return 0
+                return str(val)
+
+            sorted_members = sorted(
+                st.session_state.db_data["guildmembers"].items(),
+                key=get_sort_val,
+                reverse=not st.session_state.sort_asc
+            )
+            if job_filter != "전체":
+                sorted_members = [(n, d) for n, d in sorted_members if d.get('job', '-') == job_filter]
+
+            crown_icons = {0: "👑", 1: "🥈", 2: "🥉"}
+            table_rows = []
+            for rank, (name, m_data) in enumerate(sorted_members):
+                t_val = str(m_data.get('updated_at', '-'))
+                if t_val not in ["-", "nan"]:
+                    try: t_val = datetime.strptime(t_val, "%Y-%m-%d %H:%M:%S").strftime("%m-%d %H:%M")
+                    except: pass
+                else: t_val = "-"
+                crown = crown_icons.get(rank, "")
+                if crown:
+                    crown_html = f"<span style='font-size:0.75rem;'>{crown}</span> "
+                else:
+                    crown_html = f"<span style='font-size:0.72rem;color:#64748b;font-weight:700;'>{rank+1}. </span>"
+                job_val = m_data.get('job', '-')
+                if job_val in ['nan', '', None]: job_val = '-'
+                table_rows.append(
+                    f"<tr>"
+                    f"<td style='text-align:left;width:22%;'><span class='member-name-tag'>{crown_html}{name}</span></td>"
+                    f"<td style='width:10%;'><span style='font-size:0.72rem;color:#c084fc;font-weight:700;'>{job_val}</span></td>"
+                    f"<td style='width:12%;'><span class='spec-atk'>{int(m_data.get('atk',0)):,}</span></td>"
+                    f"<td style='width:12%;'><span class='spec-def'>{int(m_data.get('def',0)):,}</span></td>"
+                    f"<td style='width:10%;'><span class='spec-hit'>{int(m_data.get('hit',0)):,}</span></td>"
+                    f"<td style='width:12%;'><span class='member-power-tag'>{int(m_data.get('power',0)):,}</span></td>"
+                    f"<td style='width:22%;'><span class='member-time-tag'>{t_val}</span></td>"
+                    f"</tr>"
+                )
+            st.html(
+                f"<table class='guild-roster-table'><thead><tr>"
+                f"<th style='width:22%;'>이름</th><th style='width:10%;'>직업</th><th style='width:12%;'>공격</th>"
+                f"<th style='width:12%;'>방어</th><th style='width:10%;'>명중</th>"
+                f"<th style='width:12%;'>총합</th><th style='width:22%;'>갱신</th>"
+                f"</tr></thead><tbody>{''.join(table_rows)}</tbody></table>"
+            )
+
+
+
     # ── 가운데 컬럼 ──
     with col_center:
         # ── 아이템 입찰 현황 ──
@@ -1200,242 +1312,131 @@ if True:
                 st.markdown("</div>", unsafe_allow_html=True)
 
 
-    # ── 길드원 리스트 (전체 폭) ──
-    with st.container(border=True):
-        st.markdown("<div class='section-title'>📋 길드원 리스트 스펙 현황</div>", unsafe_allow_html=True)
 
-        if "sort_col" not in st.session_state:
-            st.session_state.sort_col = "power"
-            st.session_state.sort_asc = False
+        with st.container(border=True):
+            st.markdown("<div class='section-title'>📋 출석체크</div>", unsafe_allow_html=True)
+            now_kst = datetime.now(KST)
 
-        def sort_members(col):
-            if st.session_state.sort_col == col:
-                st.session_state.sort_asc = not st.session_state.sort_asc
+            attend_active, attend_session_id, attend_boss_score, attend_list = load_attend_status()
+
+            # 세션 캐시가 있으면 우선 사용
+            if st.session_state.get("attend_active_cache") and not attend_active:
+                attend_active = True
+                attend_session_id = st.session_state.get("attend_session_id", "")
+                attend_boss_score = st.session_state.get("attend_boss_score_cache", 0)
+                attend_list = st.session_state.get("attend_list_cache", {})
+            elif attend_active:
+                st.session_state.attend_active_cache = True
+                st.session_state.attend_list_cache = attend_list
             else:
-                st.session_state.sort_col = col
-                st.session_state.sort_asc = False
-
-        def get_sort_arrow(col):
-            if st.session_state.sort_col == col:
-                return " ▲" if st.session_state.sort_asc else " ▼"
-            return " ▼"
-
-        sc1,sc2,sc3,sc4,sc5,sc6,sc7 = st.columns(7)
-        with sc1:
-            if st.button(f"직업 🔍", key="sort_job", use_container_width=True):
-                st.session_state.show_job_filter = not st.session_state.get("show_job_filter", False)
-        with sc2:
-            if st.button(f"공격{get_sort_arrow('atk')}", key="sort_atk", use_container_width=True):
-                sort_members("atk"); st.rerun()
-        with sc3:
-            if st.button(f"방어{get_sort_arrow('def')}", key="sort_def", use_container_width=True):
-                sort_members("def"); st.rerun()
-        with sc4:
-            if st.button(f"명중{get_sort_arrow('hit')}", key="sort_hit", use_container_width=True):
-                sort_members("hit"); st.rerun()
-        with sc5:
-            if st.button(f"총합{get_sort_arrow('power')}", key="sort_power", use_container_width=True):
-                sort_members("power"); st.rerun()
-        with sc6:
-            if st.button(f"갱신{get_sort_arrow('updated_at')}", key="sort_time", use_container_width=True):
-                sort_members("updated_at"); st.rerun()
-        with sc7:
-            if st.button("🔄", key="sort_reset", use_container_width=True):
-                st.session_state.sort_col = "power"
-                st.session_state.sort_asc = False
-                st.rerun()
-
-        if st.session_state.get("show_job_filter", False):
-            job_list_all = ["전체", "뱅가드","버서커","디스트","레인저","엘리","디바인","어쌔신","데브","건슬","워로드"]
-            st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:10px;margin-top:4px;'>", unsafe_allow_html=True)
-            st.markdown("<span style='font-size:0.8rem;color:#ffffff;'>직업 선택</span>", unsafe_allow_html=True)
-            jf_cols = st.columns(6)
-            for ji, jname in enumerate(job_list_all):
-                with jf_cols[ji % 6]:
-                    if st.button(jname, key=f"jf_{ji}", use_container_width=True):
-                        st.session_state.job_filter = jname
-                        st.session_state.show_job_filter = False
-                        st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        job_filter = st.session_state.get("job_filter", "전체")
-
-        def get_sort_val(item):
-            if st.session_state.sort_col == 'job':
-                return (str(item[1].get('job', '')), -int(item[1].get('power', 0)))
-            val = item[1].get(st.session_state.sort_col, '')
-            if st.session_state.sort_col in ['atk','def','hit','power','gold']:
-                try: return int(val)
-                except: return 0
-            return str(val)
-
-        sorted_members = sorted(
-            st.session_state.db_data["guildmembers"].items(),
-            key=get_sort_val,
-            reverse=not st.session_state.sort_asc
-        )
-        if job_filter != "전체":
-            sorted_members = [(n, d) for n, d in sorted_members if d.get('job', '-') == job_filter]
-
-        crown_icons = {0: "👑", 1: "🥈", 2: "🥉"}
-        table_rows = []
-        for rank, (name, m_data) in enumerate(sorted_members):
-            t_val = str(m_data.get('updated_at', '-'))
-            if t_val not in ["-", "nan"]:
-                try: t_val = datetime.strptime(t_val, "%Y-%m-%d %H:%M:%S").strftime("%m-%d %H:%M")
-                except: pass
-            else: t_val = "-"
-            crown = crown_icons.get(rank, "")
-            if crown:
-                crown_html = f"<span style='font-size:0.75rem;'>{crown}</span> "
-            else:
-                crown_html = f"<span style='font-size:0.72rem;color:#64748b;font-weight:700;'>{rank+1}. </span>"
-            job_val = m_data.get('job', '-')
-            if job_val in ['nan', '', None]: job_val = '-'
-            table_rows.append(
-                f"<tr>"
-                f"<td style='text-align:left;width:22%;'><span class='member-name-tag'>{crown_html}{name}</span></td>"
-                f"<td style='width:10%;'><span style='font-size:0.72rem;color:#c084fc;font-weight:700;'>{job_val}</span></td>"
-                f"<td style='width:12%;'><span class='spec-atk'>{int(m_data.get('atk',0)):,}</span></td>"
-                f"<td style='width:12%;'><span class='spec-def'>{int(m_data.get('def',0)):,}</span></td>"
-                f"<td style='width:10%;'><span class='spec-hit'>{int(m_data.get('hit',0)):,}</span></td>"
-                f"<td style='width:12%;'><span class='member-power-tag'>{int(m_data.get('power',0)):,}</span></td>"
-                f"<td style='width:22%;'><span class='member-time-tag'>{t_val}</span></td>"
-                f"</tr>"
-            )
-        st.html(
-            f"<table class='guild-roster-table'><thead><tr>"
-            f"<th style='width:22%;'>이름</th><th style='width:10%;'>직업</th><th style='width:12%;'>공격</th>"
-            f"<th style='width:12%;'>방어</th><th style='width:10%;'>명중</th>"
-            f"<th style='width:12%;'>총합</th><th style='width:22%;'>갱신</th>"
-            f"</tr></thead><tbody>{''.join(table_rows)}</tbody></table>"
-        )
-
-    # ── 출석체크 섹션 ──
-    with st.container(border=True):
-        st.markdown("<div class='section-title'>📋 출석체크</div>", unsafe_allow_html=True)
-        now_kst = datetime.now(KST)
-
-        attend_active, attend_session_id, attend_boss_score, attend_list = load_attend_status()
-
-        # 세션 캐시가 있으면 우선 사용
-        if st.session_state.get("attend_active_cache") and not attend_active:
-            attend_active = True
-            attend_session_id = st.session_state.get("attend_session_id", "")
-            attend_boss_score = st.session_state.get("attend_boss_score_cache", 0)
-            attend_list = st.session_state.get("attend_list_cache", {})
-        elif attend_active:
-            st.session_state.attend_active_cache = True
-            st.session_state.attend_list_cache = attend_list
-        else:
-            st.session_state.attend_active_cache = False
-
-        if attend_active and attend_session_id:
-            if "attend_start_time" not in st.session_state or st.session_state.get("attend_session_id") != attend_session_id:
-                try:
-                    st.session_state.attend_start_time = datetime.strptime(attend_session_id, "%Y-%m-%d %H:%M:%S").replace(tzinfo=KST)
-                except:
-                    st.session_state.attend_start_time = now_kst
-                st.session_state.attend_session_id = attend_session_id
-            elapsed = (now_kst - st.session_state.attend_start_time).total_seconds()
-            if elapsed >= 600:
-                save_attendance_log(attend_session_id, attend_list, attend_boss_score)
-                save_attend_status(False, attend_session_id, attend_boss_score, {})
                 st.session_state.attend_active_cache = False
-                attend_active = False
 
-        if is_master:
-            if not attend_active:
-                boss_score = st.number_input("보스 점수", min_value=0, step=1, key="boss_score_input")
-                st.session_state.attend_boss_score = boss_score
-                if st.button("🟢 출석 시작", use_container_width=True):
-                    session_id = now_kst.strftime("%Y-%m-%d %H:%M:%S")
-                    st.session_state.attend_start_time = now_kst
-                    st.session_state.attend_session_id = session_id
-                    st.session_state.just_started_attend = True
-                    st.session_state.attend_active_cache = True
-                    st.session_state.attend_boss_score_cache = boss_score
-                    st.session_state.attend_list_cache = {}
-                    save_attend_status(True, session_id, boss_score, {})
-                    st.rerun()
-            else:
-                remaining = max(0, 600 - int((now_kst - st.session_state.attend_start_time).total_seconds()))
-                st.markdown(f"""
-                <div style='color:#4ade80;font-weight:700;font-size:0.9rem;margin-bottom:4px;'>
-                    ⏱ 출석 진행 중 <span id='countdown'>{remaining//60}:{remaining%60:02d}</span> 남음
-                </div>
-                <script>
-                (function() {{
-                    var el = document.getElementById('countdown');
-                    if (!el) return;
-                    var total = {remaining};
-                    var timer = setInterval(function() {{
-                        total--;
-                        if (total <= 0) {{ el.innerText = '0:00'; clearInterval(timer); return; }}
-                        var m = Math.floor(total / 60);
-                        var s = total % 60;
-                        el.innerText = m + ':' + (s < 10 ? '0' : '') + s;
-                    }}, 1000);
-                }})();
-                </script>
-                """, unsafe_allow_html=True)
-                st.markdown(f"<div style='color:#f59e0b;font-size:0.8rem;margin-bottom:8px;'>⚔️ 보스 점수: {attend_boss_score}점</div>", unsafe_allow_html=True)
-                if st.button("🔴 출석 강제 종료", use_container_width=True):
+            if attend_active and attend_session_id:
+                if "attend_start_time" not in st.session_state or st.session_state.get("attend_session_id") != attend_session_id:
+                    try:
+                        st.session_state.attend_start_time = datetime.strptime(attend_session_id, "%Y-%m-%d %H:%M:%S").replace(tzinfo=KST)
+                    except:
+                        st.session_state.attend_start_time = now_kst
+                    st.session_state.attend_session_id = attend_session_id
+                elapsed = (now_kst - st.session_state.attend_start_time).total_seconds()
+                if elapsed >= 600:
                     save_attendance_log(attend_session_id, attend_list, attend_boss_score)
                     save_attend_status(False, attend_session_id, attend_boss_score, {})
                     st.session_state.attend_active_cache = False
-                    st.session_state.attend_list_cache = {}
-                    st.rerun()
+                    attend_active = False
 
-        if attend_active:
-            already_checked = current_user in attend_list
-            if already_checked:
-                st.markdown("<div style='color:#4ade80;font-size:0.85rem;text-align:center;padding:8px;border:1px solid #4ade80;border-radius:6px;'>✅ 출석 완료!</div>", unsafe_allow_html=True)
-                st.markdown("<div class='stButton-cancel'>", unsafe_allow_html=True)
-                if st.button("❌ 출석 취소", use_container_width=True):
-                    del attend_list[current_user]
-                    st.session_state.attend_list_cache = attend_list
-                    save_attend_status(True, attend_session_id, attend_boss_score, attend_list)
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-            else:
-                if st.session_state.logged_in:
-                    st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
-                    if st.button("✅ 출석체크", use_container_width=True):
-                        attend_list[current_user] = now_kst.strftime("%Y-%m-%d %H:%M:%S")
+            if is_master:
+                if not attend_active:
+                    boss_score = st.number_input("보스 점수", min_value=0, step=1, key="boss_score_input")
+                    st.session_state.attend_boss_score = boss_score
+                    if st.button("🟢 출석 시작", use_container_width=True):
+                        session_id = now_kst.strftime("%Y-%m-%d %H:%M:%S")
+                        st.session_state.attend_start_time = now_kst
+                        st.session_state.attend_session_id = session_id
+                        st.session_state.just_started_attend = True
+                        st.session_state.attend_active_cache = True
+                        st.session_state.attend_boss_score_cache = boss_score
+                        st.session_state.attend_list_cache = {}
+                        save_attend_status(True, session_id, boss_score, {})
+                        st.rerun()
+                else:
+                    remaining = max(0, 600 - int((now_kst - st.session_state.attend_start_time).total_seconds()))
+                    st.markdown(f"""
+                    <div style='color:#4ade80;font-weight:700;font-size:0.9rem;margin-bottom:4px;'>
+                        ⏱ 출석 진행 중 <span id='countdown'>{remaining//60}:{remaining%60:02d}</span> 남음
+                    </div>
+                    <script>
+                    (function() {{
+                        var el = document.getElementById('countdown');
+                        if (!el) return;
+                        var total = {remaining};
+                        var timer = setInterval(function() {{
+                            total--;
+                            if (total <= 0) {{ el.innerText = '0:00'; clearInterval(timer); return; }}
+                            var m = Math.floor(total / 60);
+                            var s = total % 60;
+                            el.innerText = m + ':' + (s < 10 ? '0' : '') + s;
+                        }}, 1000);
+                    }})();
+                    </script>
+                    """, unsafe_allow_html=True)
+                    st.markdown(f"<div style='color:#f59e0b;font-size:0.8rem;margin-bottom:8px;'>⚔️ 보스 점수: {attend_boss_score}점</div>", unsafe_allow_html=True)
+                    if st.button("🔴 출석 강제 종료", use_container_width=True):
+                        save_attendance_log(attend_session_id, attend_list, attend_boss_score)
+                        save_attend_status(False, attend_session_id, attend_boss_score, {})
+                        st.session_state.attend_active_cache = False
+                        st.session_state.attend_list_cache = {}
+                        st.rerun()
+
+            if attend_active:
+                already_checked = current_user in attend_list
+                if already_checked:
+                    st.markdown("<div style='color:#4ade80;font-size:0.85rem;text-align:center;padding:8px;border:1px solid #4ade80;border-radius:6px;'>✅ 출석 완료!</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='stButton-cancel'>", unsafe_allow_html=True)
+                    if st.button("❌ 출석 취소", use_container_width=True):
+                        del attend_list[current_user]
                         st.session_state.attend_list_cache = attend_list
                         save_attend_status(True, attend_session_id, attend_boss_score, attend_list)
                         st.rerun()
                     st.markdown("</div>", unsafe_allow_html=True)
-        elif not st.session_state.logged_in:
-            st.caption("로그인 후 출석체크 가능해요")
-        else:
-            st.caption("출석 대기 중...")
-
-        if attend_list:
-            st.markdown("<div style='border-top:1px solid #1e293b;margin:10px 0;'></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-bottom:6px;'>출석 인원: {len(attend_list)}명</div>", unsafe_allow_html=True)
-            for idx, (aname, atime) in enumerate(attend_list.items()):
-                st.markdown(
-                    f"<div style='font-size:0.8rem;padding:4px 0;color:#ffffff;border-bottom:1px solid #1e293b;'>"
-                    f"<span style='color:#38bdf8;font-weight:700;'>{idx+1}. {aname}</span>"
-                    f"<span style='color:#64748b;font-size:0.72rem;float:right;'>{atime[11:16] if len(atime) > 11 else ''}</span>"
-                    f"</div>",
-                    unsafe_allow_html=True
-                )
-
-        if is_master:
-            with st.expander("📜 출석 기록 히스토리"):
-                logs = load_attendance_log()
-                if not logs:
-                    st.caption("기록 없음")
                 else:
-                    sessions = {}
-                    for log in logs:
-                        sid = log.get("session_time", "")
-                        if sid not in sessions:
-                            sessions[sid] = []
-                        sessions[sid].append(log.get("name", ""))
-                    for sid, names in sorted(sessions.items(), reverse=True):
-                        st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-top:8px;'>{sid} ({len(names)}명)</div>", unsafe_allow_html=True)
-                        st.markdown(f"<div style='font-size:0.8rem;color:#ffffff;'>{', '.join(names)}</div>", unsafe_allow_html=True)
+                    if st.session_state.logged_in:
+                        st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
+                        if st.button("✅ 출석체크", use_container_width=True):
+                            attend_list[current_user] = now_kst.strftime("%Y-%m-%d %H:%M:%S")
+                            st.session_state.attend_list_cache = attend_list
+                            save_attend_status(True, attend_session_id, attend_boss_score, attend_list)
+                            st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+            elif not st.session_state.logged_in:
+                st.caption("로그인 후 출석체크 가능해요")
+            else:
+                st.caption("출석 대기 중...")
+
+            if attend_list:
+                st.markdown("<div style='border-top:1px solid #1e293b;margin:10px 0;'></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-bottom:6px;'>출석 인원: {len(attend_list)}명</div>", unsafe_allow_html=True)
+                for idx, (aname, atime) in enumerate(attend_list.items()):
+                    st.markdown(
+                        f"<div style='font-size:0.8rem;padding:4px 0;color:#ffffff;border-bottom:1px solid #1e293b;'>"
+                        f"<span style='color:#38bdf8;font-weight:700;'>{idx+1}. {aname}</span>"
+                        f"<span style='color:#64748b;font-size:0.72rem;float:right;'>{atime[11:16] if len(atime) > 11 else ''}</span>"
+                        f"</div>",
+                        unsafe_allow_html=True
+                    )
+
+            if is_master:
+                with st.expander("📜 출석 기록 히스토리"):
+                    logs = load_attendance_log()
+                    if not logs:
+                        st.caption("기록 없음")
+                    else:
+                        sessions = {}
+                        for log in logs:
+                            sid = log.get("session_time", "")
+                            if sid not in sessions:
+                                sessions[sid] = []
+                            sessions[sid].append(log.get("name", ""))
+                        for sid, names in sorted(sessions.items(), reverse=True):
+                            st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-top:8px;'>{sid} ({len(names)}명)</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size:0.8rem;color:#ffffff;'>{', '.join(names)}</div>", unsafe_allow_html=True)
