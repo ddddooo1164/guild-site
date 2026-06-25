@@ -606,6 +606,8 @@ else:
 
             # 정렬 적용
             def get_sort_val(item):
+                if st.session_state.sort_col == 'job':
+                    return (str(item[1].get('job', '')), -int(item[1].get('power', 0)))
                 val = item[1].get(st.session_state.sort_col, '')
                 if st.session_state.sort_col in ['atk','def','hit','power','gold']:
                     try: return int(val)
