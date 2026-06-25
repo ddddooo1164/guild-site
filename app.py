@@ -333,7 +333,21 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
+title_col, master_col = st.columns([5, 1])
+with title_col:
+    st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", unsafe_allow_html=True)
+with master_col:
+    quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
+    if quick_pw_top == "1234":
+        if "마스터" not in st.session_state.db_data["guildmembers"]:
+            st.session_state.db_data["guildmembers"]["마스터"] = {
+                "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
+                "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
+                "attendance":{"레기카":False,"시온":False,"플라우드":False}
+            }
+        st.session_state.logged_in = True
+        st.session_state.login_user = "마스터"
+        st.rerun()
 
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
@@ -353,21 +367,6 @@ if True:
         with st.container(border=True):
             if not st.session_state.logged_in:
                 # 로그인/회원가입 폼
-                # 마스터 로그인 오른쪽 위에 작게
-                _, master_col = st.columns([4, 1])
-                with master_col:
-                    quick_pw = st.text_input("", placeholder="마스터", type="password", key="quick_pw", label_visibility="collapsed")
-                    if quick_pw == "1234":
-                        if "마스터" not in st.session_state.db_data["guildmembers"]:
-                            st.session_state.db_data["guildmembers"]["마스터"] = {
-                                "password":"1234","gold":0,"atk":0,"def":0,"hit":0,"power":0,
-                                "updated_at":datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S"),
-                                "attendance":{"레기카":False,"시온":False,"플라우드":False}
-                            }
-                        st.session_state.logged_in = True
-                        st.session_state.login_user = "마스터"
-                        st.rerun()
-
                 input_id = st.text_input("ID", placeholder="길드원 계정명 입력", key="login_id")
                 input_pw = st.text_input("PASSWORD", type="password", placeholder="비밀번호 입력", key="login_pw")
                 btn_l, btn_r = st.columns(2)
