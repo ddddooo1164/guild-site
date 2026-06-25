@@ -693,6 +693,7 @@ if True:
                         f_df = load_sheet_data("guild_finance")
                         st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
                         st.session_state.auction_items = load_auction_from_sheet()
+                        st.session_state.balance_cache = get_balance(current_user)
                         st.rerun()
             if st.session_state.get("show_nick_editor", False):
                 st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:12px;margin-top:4px;'>", unsafe_allow_html=True)
@@ -725,7 +726,10 @@ if True:
 
 
             my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
-            my_balance = get_balance(current_user)
+            # 잔액 캐시 (새로고침 버튼 누를 때만 갱신)
+            if "balance_cache" not in st.session_state:
+                st.session_state.balance_cache = get_balance(current_user)
+            my_balance = st.session_state.balance_cache
             st.markdown(
                 f"<table style='width:100%;border-collapse:collapse;margin-bottom:12px;'>"
                 f"<tr>"
@@ -1261,6 +1265,7 @@ if True:
                         save_settlement_log(now_str, scores, attend_pool, distributions)
                         # 출석 기록 초기화
                         clear_attendance_log()
+                        st.session_state.balance_cache = get_balance(current_user)
                         st.success("✅ 정산 완료! 출석 기록이 초기화됐어요.")
                         st.rerun()
                 else:
