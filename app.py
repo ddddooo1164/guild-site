@@ -448,14 +448,13 @@ def finalize_auction(item, db_data):
     item["bidder"] = best
     return item
 
-m_df = load_sheet_data("guildmembers")
-f_df = load_sheet_data("guild_finance")
 if "db_data" not in st.session_state:
-    st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
-else:
+    m_df = load_sheet_data("guildmembers")
+    f_df = load_sheet_data("guild_finance")
     st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
 
-st.session_state.auction_items = load_auction_from_sheet()
+if "auction_items" not in st.session_state:
+    st.session_state.auction_items = load_auction_from_sheet()
 
 # 마감된 아이템 자동 낙찰 처리
 changed = False
@@ -679,11 +678,9 @@ if True:
                         st.rerun()
                 with btn3:
                     if st.button("🔄 새로고침", use_container_width=True):
-                        m_df = load_sheet_data("guildmembers")
-                        f_df = load_sheet_data("guild_finance")
-                        st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
-                        st.session_state.auction_items = load_auction_from_sheet()
-                        # 잔액 캐시 초기화
+                        for k in ["db_data", "auction_items"]:
+                            if k in st.session_state:
+                                del st.session_state[k]
                         for k in list(st.session_state.keys()):
                             if k.startswith("bal_"):
                                 del st.session_state[k]
