@@ -574,7 +574,7 @@ st.markdown("<div class='neon-title'>레이븐 리더 길드 아지트</div>", u
 _, master_top_col = st.columns([8, 1])
 with master_top_col:
     st.markdown("<div style='margin-top:-58px;'>", unsafe_allow_html=True)
-    quick_pw_top = st.text_input("", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
+    quick_pw_top = st.text_input("마스터", placeholder="마스터", type="password", key="quick_pw_top", label_visibility="collapsed")
     st.markdown("<style>div[data-testid='stButton']:has(button[kind='secondary'][id*='master_login_btn']) button{padding:2px 4px !important;font-size:0.7rem !important;height:24px !important;}</style>", unsafe_allow_html=True)
     if st.button("입장", key="master_login_btn", use_container_width=True):
         if quick_pw_top == "1234":
@@ -592,20 +592,7 @@ with master_top_col:
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
 
-# 출석 진행 중일 때 자동 갱신 (페이지 맨 위에서 처리)
 import time
-if not st.session_state.get("just_started_attend", False):
-    try:
-        _attend_active, _, _, _ = load_attend_status()
-        if _attend_active:
-            _is_master = st.session_state.get("login_user", "") == "마스터"
-            _interval = 3 if _is_master else 15
-            _last = st.session_state.get("attend_last_refresh", 0)
-            if time.time() - _last >= _interval:
-                st.session_state.attend_last_refresh = time.time()
-                st.rerun()
-    except:
-        pass
 
 if True:
     col_left, col_center, col_right = st.columns([1.0, 1.0, 0.9])
