@@ -1308,13 +1308,14 @@ if True:
             attend_active, attend_session_id, attend_boss_score, attend_list = load_attend_status()
 
             # 출석 진행 중일 때 자동 갱신
-            if attend_active:
+            if attend_active and not st.session_state.get("just_started_attend", False):
                 import time
                 refresh_interval = 1 if is_master else 10
                 last_refresh = st.session_state.get("attend_last_refresh", 0)
                 if time.time() - last_refresh >= refresh_interval:
                     st.session_state.attend_last_refresh = time.time()
                     st.rerun()
+            st.session_state.just_started_attend = False
 
             # 마감 체크 (세션 시작 시간은 세션에 저장)
             if attend_active and attend_session_id:
@@ -1335,12 +1336,30 @@ if True:
                         session_id = now_kst.strftime("%Y-%m-%d %H:%M:%S")
                         st.session_state.attend_start_time = now_kst
                         st.session_state.attend_session_id = session_id
+                        st.session_state.just_started_attend = True
                         save_attend_status(True, session_id, boss_score, {})
                         st.rerun()
                 else:
                     remaining = max(0, 600 - int((now_kst - st.session_state.attend_start_time).total_seconds()))
-                    mins, secs = divmod(remaining, 60)
-                    st.markdown(f"<div style='color:#4ade80;font-weight:700;font-size:0.9rem;margin-bottom:4px;'>⏱ 출석 진행 중 {mins}:{secs:02d} 남음</div>", unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div style='color:#4ade80;font-weight:700;font-size:0.9rem;margin-bottom:4px;'>
+                        ⏱ 출석 진행 중 <span id='countdown'>{remaining//60}:{remaining%60:02d}</span> 남음
+                    </div>
+                    <script>
+                    (function() {{
+                        var el = document.getElementById('countdown');
+                        if (!el) return;
+                        var total = {remaining};
+                        var timer = setInterval(function() {{
+                            total--;
+                            if (total <= 0) {{ el.innerText = '0:00'; clearInterval(timer); return; }}
+                            var m = Math.floor(total / 60);
+                            var s = total % 60;
+                            el.innerText = m + ':' + (s < 10 ? '0' : '') + s;
+                        }}, 1000);
+                    }})();
+                    </script>
+                    """, unsafe_allow_html=True)
                     st.markdown(f"<div style='color:#f59e0b;font-size:0.8rem;margin-bottom:8px;'>⚔️ 보스 점수: {attend_boss_score}점</div>", unsafe_allow_html=True)
                     if st.button("🔴 출석 강제 종료", use_container_width=True):
                         save_attendance_log(attend_session_id, attend_list, attend_boss_score)
