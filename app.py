@@ -298,15 +298,16 @@ def save_transaction(name, amount, t_type, memo=""):
         return False
 
 def load_my_transactions(name):
-    """개인 입출금 내역 로드 (CSV URL 방식)"""
+    """개인 입출금 내역 로드"""
     try:
-        import pandas as pd
-        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=transactions"
-        df = pd.read_csv(url)
-        if df.empty:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        ws = sh.worksheet("transactions")
+        all_values = ws.get_all_values()
+        if len(all_values) < 2:
             return []
-        df = df[df['name'].astype(str) == name]
-        return df.to_dict('records')
+        headers = all_values[0]
+        return [dict(zip(headers, row)) for row in all_values[1:] if len(row) > 1 and row[1] == name]
     except:
         return []
 
@@ -693,7 +694,10 @@ if True:
                         f_df = load_sheet_data("guild_finance")
                         st.session_state.db_data = convert_sheets_to_dict(m_df, f_df)
                         st.session_state.auction_items = load_auction_from_sheet()
-                        st.session_state.balance_cache = get_balance(current_user)
+                        # 잔액 캐시 초기화
+                        for k in list(st.session_state.keys()):
+                            if k.startswith("bal_"):
+                                del st.session_state[k]
                         st.rerun()
             if st.session_state.get("show_nick_editor", False):
                 st.markdown("<div style='background:#141b29;border:1px solid #2e3d56;border-radius:8px;padding:12px;margin-top:4px;'>", unsafe_allow_html=True)
@@ -726,7 +730,11 @@ if True:
 
 
             my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
-            my_balance = get_balance(current_user) if st.session_state.logged_in else 0
+            # 잔액: 로그인 유저 바뀌거나 캐시 없으면 갱신
+            _cache_key = f"bal_{current_user}"
+            if st.session_state.logged_in and _cache_key not in st.session_state:
+                st.session_state[_cache_key] = get_balance(current_user)
+            my_balance = st.session_state.get(_cache_key, 0) if st.session_state.logged_in else 0
             st.markdown(
                 f"<table style='width:100%;border-collapse:collapse;margin-bottom:12px;'>"
                 f"<tr>"
@@ -1262,7 +1270,7 @@ if True:
                         save_settlement_log(now_str, scores, attend_pool, distributions)
                         # 출석 기록 초기화
                         clear_attendance_log()
-                        st.session_state.balance_cache = get_balance(current_user)
+                        if f"bal_{current_user}" in st.session_state: del st.session_state[f"bal_{current_user}"]
                         st.success("✅ 정산 완료! 출석 기록이 초기화됐어요.")
                         st.rerun()
                 else:
