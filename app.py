@@ -667,20 +667,16 @@ if True:
             with c1:
                 st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
                 st.markdown(f"<div class='stat-val blue-txt'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
-                st.markdown("<style>div[data-testid='stHorizontalBlock'] div.stButton button{height:42px !important;white-space:nowrap !important;}</style>", unsafe_allow_html=True)
-                tw1, tw2 = st.columns(2)
-                with tw1:
-                    st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
-                    if st.button("💸 출금", use_container_width=True):
-                        prev_gold = st.session_state.db_data["guildmembers"][current_user].get("gold", 0)
-                        st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
-                        save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
-                        save_transaction(current_user, prev_gold, "출금", "출금 신청")
-                        st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
-                with tw2:
-                    if st.button("📒 내역", use_container_width=True):
-                        st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
+                st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
+                if st.button("💸 출금 신청", use_container_width=True):
+                    prev_gold = st.session_state.db_data["guildmembers"][current_user].get("gold", 0)
+                    st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
+                    save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
+                    save_transaction(current_user, prev_gold, "출금", "출금 신청")
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+                if st.button("📒 입출금 내역", use_container_width=True):
+                    st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
                 if st.session_state.get("show_transactions", False):
                     txs = load_my_transactions(current_user)
                     if not txs:
