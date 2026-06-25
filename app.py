@@ -1004,24 +1004,29 @@ if True:
                 # 우선순위 정렬
                 def sort_priority(item):
                     if item.get("status") != "경매중":
-                        return (99, 0)  # 경매중 아닌 건 맨 아래
+                        # 마감된 것들 중 최근 마감된 게 위로
+                        try:
+                            deadline_dt = datetime.strptime(item["deadline"], "%Y-%m-%d %H:%M:%S")
+                            return (1, -deadline_dt.timestamp())
+                        except:
+                            return (1, 0)
                     try:
                         deadline_dt = datetime.strptime(item["deadline"], "%Y-%m-%d %H:%M:%S")
                         remaining_sec = (deadline_dt.replace(tzinfo=KST) - datetime.now(KST)).total_seconds()
                     except:
                         remaining_sec = 99999
-                    is_urgent = remaining_sec <= 3600  # 1시간 이내
+                    is_urgent = remaining_sec <= 3600
                     has_bidders = len(item.get("bidders", [])) > 0
                     price = item.get("price", 0)
 
                     if is_urgent and not has_bidders:
-                        return (0, remaining_sec)   # 1순위: 임박 + 입찰자 없음
+                        return (0, 0, remaining_sec)
                     elif is_urgent and has_bidders:
-                        return (1, remaining_sec)   # 2순위: 임박 + 입찰자 있음
+                        return (0, 1, remaining_sec)
                     elif price >= 1000:
-                        return (2, -price)           # 3순위: 1000다이아 이상
+                        return (0, 2, -price)
                     else:
-                        return (3, remaining_sec)   # 나머지
+                        return (0, 3, remaining_sec)
 
                 sorted_items = sorted(enumerate(st.session_state.auction_items), key=lambda x: sort_priority(x[1]))
 
