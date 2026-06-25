@@ -667,6 +667,18 @@ if True:
             with c1:
                 st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
                 st.markdown(f"<div class='stat-val blue-txt'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
+            with c2:
+                my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
+                st.markdown("<span style='font-size:13px;'>참여도</span>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;'>나의 기여도: {my_contribution}%</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;'>보스 참여도: {my_attend_rate}%</div>", unsafe_allow_html=True)
+            with c3:
+                st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
+                st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
+
+            # 버튼 한 줄
+            b1, b2, b3 = st.columns(3)
+            with b1:
                 st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
                 if st.button("💸 출금 신청", use_container_width=True):
                     prev_gold = st.session_state.db_data["guildmembers"][current_user].get("gold", 0)
@@ -675,37 +687,32 @@ if True:
                     save_transaction(current_user, prev_gold, "출금", "출금 신청")
                     st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
-
-                if st.session_state.get("show_transactions", False):
-                    txs = load_my_transactions(current_user)
-                    if not txs:
-                        st.caption("내역 없음")
-                    else:
-                        for tx in reversed(txs):
-                            color = "#4ade80" if tx.get("type") == "입금" else "#ef4444"
-                            sign = "+" if tx.get("type") == "입금" else "-"
-                            st.markdown(
-                                f"<div style='font-size:0.75rem;padding:3px 0;border-bottom:1px solid #1e293b;'>"
-                                f"<span style='color:#94a3b8;'>{tx.get('time','')[5:16]}</span> "
-                                f"<span style='color:{color};font-weight:700;'>{sign}{int(tx.get('amount',0)):,} 💎</span> "
-                                f"<span style='color:#64748b;'>{tx.get('memo','')}</span>"
-                                f"</div>",
-                                unsafe_allow_html=True
-                            )
-            with c2:
-                my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
-                st.markdown("<span style='font-size:13px;'>참여도</span>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;'>나의 기여도: {my_contribution}%</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;margin-bottom:8px;'>보스 참여도: {my_attend_rate}%</div>", unsafe_allow_html=True)
+            with b2:
                 if st.button("📒 입출금 내역", use_container_width=True, key="tx_btn_c2"):
                     st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
-            with c3:
-                st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
+            with b3:
                 st.markdown("<div class='stButton-refresh'>", unsafe_allow_html=True)
                 if st.button("⚡ 투력 최신화", use_container_width=True):
                     st.session_state.show_power_editor = not st.session_state.get("show_power_editor", False)
                 st.markdown("</div>", unsafe_allow_html=True)
+
+            # 입출금 내역
+            if st.session_state.get("show_transactions", False):
+                txs = load_my_transactions(current_user)
+                if not txs:
+                    st.caption("내역 없음")
+                else:
+                    for tx in reversed(txs):
+                        color = "#4ade80" if tx.get("type") == "입금" else "#ef4444"
+                        sign = "+" if tx.get("type") == "입금" else "-"
+                        st.markdown(
+                            f"<div style='font-size:0.75rem;padding:3px 0;border-bottom:1px solid #1e293b;'>"
+                            f"<span style='color:#94a3b8;'>{tx.get('time','')[5:16]}</span> "
+                            f"<span style='color:{color};font-weight:700;'>{sign}{int(tx.get('amount',0)):,} 💎</span> "
+                            f"<span style='color:#64748b;'>{tx.get('memo','')}</span>"
+                            f"</div>",
+                            unsafe_allow_html=True
+                        )
 
             if st.session_state.get("show_power_editor", False):
                 st.write("")
