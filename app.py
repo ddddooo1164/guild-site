@@ -1167,11 +1167,11 @@ if True:
             if is_master:
                 if not st.session_state.attend_active:
                     boss_score = st.number_input("보스 점수", min_value=0, step=1, key="boss_score_input")
+                    st.session_state.attend_boss_score = boss_score
                     if st.button("🟢 출석 시작", use_container_width=True):
                         st.session_state.attend_active = True
                         st.session_state.attend_start_time = now_kst
                         st.session_state.attend_session_id = now_kst.strftime("%Y-%m-%d %H:%M:%S")
-                        st.session_state.attend_boss_score = boss_score
                         st.session_state.attend_list = {}
                         st.rerun()
                 else:
@@ -1183,7 +1183,8 @@ if True:
                     if st.button("🔴 출석 강제 종료", use_container_width=True):
                         save_attendance_log(
                             st.session_state.attend_session_id,
-                            st.session_state.attend_list
+                            st.session_state.attend_list,
+                            st.session_state.get("attend_boss_score", 0)
                         )
                         st.session_state.attend_active = False
                         st.rerun()
