@@ -1321,7 +1321,19 @@ if True:
 
             # 시트에서 출석 상태 로드
             attend_active, attend_session_id, attend_boss_score, attend_list = load_attend_status()
-            st.session_state.just_started_attend = False
+
+            # 세션 캐시가 있으면 우선 사용 (시트 반영 딜레이 방지)
+            if st.session_state.get("attend_active_cache") and not attend_active:
+                attend_active = True
+                attend_session_id = st.session_state.get("attend_session_id", "")
+                attend_boss_score = st.session_state.get("attend_boss_score_cache", 0)
+                attend_list = st.session_state.get("attend_list_cache", {})
+            elif attend_active:
+                # 시트에서 읽혔으면 캐시 업데이트
+                st.session_state.attend_active_cache = True
+                st.session_state.attend_list_cache = attend_list
+            else:
+                st.session_state.attend_active_cache = False
 
             # 마감 체크 (세션 시작 시간은 세션에 저장)
             if attend_active and attend_session_id:
@@ -1346,6 +1358,9 @@ if True:
                         st.session_state.attend_start_time = now_kst
                         st.session_state.attend_session_id = session_id
                         st.session_state.just_started_attend = True
+                        st.session_state.attend_active_cache = True
+                        st.session_state.attend_boss_score_cache = boss_score
+                        st.session_state.attend_list_cache = {}
                         save_attend_status(True, session_id, boss_score, {})
                         st.rerun()
                 else:
@@ -1373,6 +1388,8 @@ if True:
                     if st.button("🔴 출석 강제 종료", use_container_width=True):
                         save_attendance_log(attend_session_id, attend_list, attend_boss_score)
                         save_attend_status(False, attend_session_id, attend_boss_score, {})
+                        st.session_state.attend_active_cache = False
+                        st.session_state.attend_list_cache = {}
                         st.rerun()
 
             # 출석 버튼 (일반 길드원)
@@ -1391,6 +1408,7 @@ if True:
                         st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
                         if st.button("✅ 출석체크", use_container_width=True):
                             attend_list[current_user] = now_kst.strftime("%Y-%m-%d %H:%M:%S")
+                            st.session_state.attend_list_cache = attend_list
                             save_attend_status(True, attend_session_id, attend_boss_score, attend_list)
                             st.rerun()
                         st.markdown("</div>", unsafe_allow_html=True)
