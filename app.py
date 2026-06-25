@@ -730,10 +730,12 @@ if True:
 
 
             my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
-            # 잔액 캐시 (새로고침 버튼 누를 때만 갱신)
-            if "balance_cache" not in st.session_state:
-                st.session_state.balance_cache = get_balance(current_user) if st.session_state.logged_in else 0
-            my_balance = st.session_state.balance_cache if st.session_state.logged_in else 0
+            # 잔액 캐시 (로그인 유저가 바뀌면 갱신)
+            if st.session_state.logged_in:
+                if st.session_state.get("balance_cache_user") != current_user:
+                    st.session_state.balance_cache = get_balance(current_user)
+                    st.session_state.balance_cache_user = current_user
+            my_balance = st.session_state.get("balance_cache", 0) if st.session_state.logged_in else 0
             st.markdown(
                 f"<table style='width:100%;border-collapse:collapse;margin-bottom:12px;'>"
                 f"<tr>"
