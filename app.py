@@ -132,6 +132,39 @@ def save_finance_to_sheet(finance):
         st.error(f"자산 시트 저장 실패: {e}")
         return False
 
+def save_attendance_log(session_time, attendees):
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("attendance_log")
+        except:
+            ws = sh.add_worksheet(title="attendance_log", rows="1000", cols="3")
+            ws.update("A1", [["session_time", "name", "checked_at"]])
+        for name, checked_at in attendees.items():
+            ws.append_row([session_time, name, checked_at])
+        return True
+    except Exception as e:
+        st.error(f"출석 저장 실패: {e}")
+        return False
+
+def load_attendance_log():
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("attendance_log")
+            all_values = ws.get_all_values()
+            if len(all_values) < 2:
+                return []
+            headers = all_values[0]
+            rows = all_values[1:]
+            return [dict(zip(headers, row)) for row in rows]
+        except:
+            return []
+    except:
+        return []
+
 def load_auction_from_sheet():
     try:
         df = load_sheet_data("auction_items")
@@ -964,20 +997,91 @@ if True:
                 st.markdown("</div>", unsafe_allow_html=True)
 
         with st.container(border=True):
-            st.markdown("<div class='section-title'>보스 출석체크</div>", unsafe_allow_html=True)
-            st.caption(f"**{current_user}** 님의 오늘 레이드 참여 기록입니다.")
-            st.write("")
-            boss_1 = st.checkbox("👹 레기카 토벌 완료", value=member_info["attendance"].get("레기카", False))
-            boss_2 = st.checkbox("⚡ 시온 토벌 완료", value=member_info["attendance"].get("시온", False))
-            boss_3 = st.checkbox("🔮 플라우드 토벌 완료", value=member_info["attendance"].get("플라우드", False))
-            st.write("")
-            st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
-            if st.button("⚔️ 레이드 기록 저장", use_container_width=True):
-                st.session_state.db_data["guildmembers"][current_user]["attendance"]["레기카"] = boss_1
-                st.session_state.db_data["guildmembers"][current_user]["attendance"]["시온"] = boss_2
-                st.session_state.db_data["guildmembers"][current_user]["attendance"]["플라우드"] = boss_3
-                with st.spinner("저장 중..."):
-                    ok = save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
-                if ok: st.success("✅ 레이드 기록 저장!")
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>📋 출석체크</div>", unsafe_allow_html=True)
+
+            now_kst = datetime.now(KST)
+
+            # 출석 세션 상태 초기화
+            if "attend_active" not in st.session_state:
+                st.session_state.attend_active = False
+                st.session_state.attend_start_time = None
+                st.session_state.attend_session_id = None
+                st.session_state.attend_list = {}
+
+            # 마감 체크
+            if st.session_state.attend_active and st.session_state.attend_start_time:
+                elapsed = (now_kst - st.session_state.attend_start_time).total_seconds()
+                if elapsed >= 600:
+                    # 10분 지나면 자동 종료 후 시트 저장
+                    save_attendance_log(
+                        st.session_state.attend_session_id,
+                        st.session_state.attend_list
+                    )
+                    st.session_state.attend_active = False
+
+            if is_master:
+                if not st.session_state.attend_active:
+                    if st.button("🟢 출석 시작", use_container_width=True):
+                        st.session_state.attend_active = True
+                        st.session_state.attend_start_time = now_kst
+                        st.session_state.attend_session_id = now_kst.strftime("%Y-%m-%d %H:%M:%S")
+                        st.session_state.attend_list = {}
+                        st.rerun()
+                else:
+                    remaining = max(0, 600 - int((now_kst - st.session_state.attend_start_time).total_seconds()))
+                    mins, secs = divmod(remaining, 60)
+                    st.markdown(f"<div style='color:#4ade80;font-weight:700;font-size:0.9rem;margin-bottom:8px;'>⏱ 출석 진행 중 {mins}:{secs:02d} 남음</div>", unsafe_allow_html=True)
+                    if st.button("🔴 출석 강제 종료", use_container_width=True):
+                        save_attendance_log(
+                            st.session_state.attend_session_id,
+                            st.session_state.attend_list
+                        )
+                        st.session_state.attend_active = False
+                        st.rerun()
+
+            # 출석 버튼 (일반 길드원)
+            if st.session_state.attend_active:
+                already_checked = current_user in st.session_state.attend_list
+                if already_checked:
+                    st.markdown(f"<div style='color:#4ade80;font-size:0.85rem;text-align:center;padding:8px;border:1px solid #4ade80;border-radius:6px;'>✅ 출석 완료!</div>", unsafe_allow_html=True)
+                else:
+                    if st.session_state.logged_in:
+                        st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
+                        if st.button("✅ 출석체크", use_container_width=True):
+                            st.session_state.attend_list[current_user] = now_kst.strftime("%Y-%m-%d %H:%M:%S")
+                            st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+            elif not st.session_state.logged_in:
+                st.caption("로그인 후 출석체크 가능해요")
+            else:
+                st.caption("출석 대기 중...")
+
+            # 출석자 리스트
+            if st.session_state.attend_list:
+                st.markdown("<div style='border-top:1px solid #1e293b;margin:10px 0;'></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-bottom:6px;'>출석 인원: {len(st.session_state.attend_list)}명</div>", unsafe_allow_html=True)
+                for idx, (aname, atime) in enumerate(st.session_state.attend_list.items()):
+                    st.markdown(
+                        f"<div style='font-size:0.8rem;padding:4px 0;color:#ffffff;border-bottom:1px solid #1e293b;'>"
+                        f"<span style='color:#38bdf8;font-weight:700;'>{idx+1}. {aname}</span>"
+                        f"<span style='color:#64748b;font-size:0.72rem;float:right;'>{atime[11:16]}</span>"
+                        f"</div>",
+                        unsafe_allow_html=True
+                    )
+
+            # 출석 기록 히스토리 (마스터만)
+            if is_master:
+                with st.expander("📜 출석 기록 히스토리"):
+                    logs = load_attendance_log()
+                    if not logs:
+                        st.caption("기록 없음")
+                    else:
+                        sessions = {}
+                        for log in logs:
+                            sid = log.get("session_time", "")
+                            if sid not in sessions:
+                                sessions[sid] = []
+                            sessions[sid].append(log.get("name", ""))
+                        for sid, names in sorted(sessions.items(), reverse=True):
+                            st.markdown(f"<div style='font-size:0.8rem;color:#94a3b8;margin-top:8px;'>{sid} ({len(names)}명)</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size:0.8rem;color:#ffffff;'>{', '.join(names)}</div>", unsafe_allow_html=True)
