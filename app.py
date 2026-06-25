@@ -614,9 +614,6 @@ else:
                 jf_cols = st.columns(6)
                 for ji, jname in enumerate(job_list_all):
                     with jf_cols[ji % 6]:
-                        is_sel = selected_filter == jname
-                        bg = "#0095ff" if is_sel else "#2e3d56"
-                        st.markdown(f"<div style='background:{bg};color:#ffffff;border:1px solid {'#0095ff' if is_sel else '#3e4d66'};border-radius:6px;padding:4px;text-align:center;font-size:0.75rem;font-weight:700;margin-bottom:4px;'>{jname}</div>", unsafe_allow_html=True)
                         if st.button(jname, key=f"jf_{ji}", use_container_width=True):
                             st.session_state.job_filter = jname
                             st.session_state.show_job_filter = False
