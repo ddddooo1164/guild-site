@@ -314,6 +314,24 @@ def load_my_transactions(name):
     except:
         return []
 
+def get_balance(name):
+    """transactions 시트에서 잔액 계산 (입금 - 출금)"""
+    try:
+        txs = load_my_transactions(name)
+        balance = 0
+        for tx in txs:
+            try:
+                amt = int(tx.get('amount', 0))
+            except:
+                amt = 0
+            if tx.get('type') == '입금':
+                balance += amt
+            elif tx.get('type') == '출금':
+                balance -= amt
+        return max(0, balance)
+    except:
+        return 0
+
 def get_my_attendance_stats(my_name):
     """나의 기여도 및 보스 참여도 계산"""
     try:
@@ -707,15 +725,16 @@ if True:
 
 
             my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
+            my_balance = get_balance(current_user)
             st.markdown(
                 f"<table style='width:100%;border-collapse:collapse;margin-bottom:12px;'>"
                 f"<tr>"
-                f"<td style='width:33%;padding:4px;'><span style='font-size:13px;color:#ffffff;'>예상 분배금</span></td>"
+                f"<td style='width:33%;padding:4px;'><span style='font-size:13px;color:#ffffff;'>나의 통장</span></td>"
                 f"<td style='width:33%;padding:4px;'><span style='font-size:13px;color:#ffffff;'>참여도</span></td>"
                 f"<td style='width:33%;padding:4px;'><span style='font-size:13px;color:#ffffff;'>현재 전투력</span></td>"
                 f"</tr>"
                 f"<tr>"
-                f"<td style='padding:4px;'><span style='font-size:1.5rem;font-weight:700;color:#38bdf8;'>{member_info['gold']:,} 💎</span></td>"
+                f"<td style='padding:4px;'><span style='font-size:1.5rem;font-weight:700;color:#38bdf8;'>{my_balance:,} 💎</span></td>"
                 f"<td style='padding:4px;'>"
                 f"<span style='font-size:0.82rem;color:#c084fc;font-weight:700;'>기여도: {my_contribution}%</span><br>"
                 f"<span style='font-size:0.82rem;color:#c084fc;font-weight:700;'>참여도: {my_attend_rate}%</span>"
