@@ -641,9 +641,9 @@ if True:
                 st.markdown("</div>", unsafe_allow_html=True)
             with c2:
                 my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
-                st.markdown("<span style='font-size:13px;'>나의 기여도</span>", unsafe_allow_html=True)
-                st.markdown(f"<div class='stat-val purple-txt'>{my_contribution}%</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:0.75rem;color:#94a3b8;margin-top:-10px;margin-bottom:8px;'>보스참여도: {my_attend_rate}%</div>", unsafe_allow_html=True)
+                st.markdown("<span style='font-size:13px;'>참여도</span>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;'>나의 기여도: {my_contribution}%</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.85rem;color:#c084fc;font-weight:700;margin-top:4px;margin-bottom:8px;'>보스 참여도: {my_attend_rate}%</div>", unsafe_allow_html=True)
             with c3:
                 st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
                 st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
