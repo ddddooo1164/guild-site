@@ -239,6 +239,40 @@ def load_settlement_log():
     except:
         return []
 
+def save_transaction(name, amount, t_type, memo=""):
+    """입출금 내역 저장 (t_type: '입금' or '출금')"""
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("transactions")
+        except:
+            ws = sh.add_worksheet(title="transactions", rows="1000", cols="5")
+            ws.update("A1", [["time", "name", "type", "amount", "memo"]])
+        now_str = datetime.now(ZoneInfo('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
+        ws.append_row([now_str, name, t_type, amount, memo])
+        return True
+    except Exception as e:
+        st.error(f"거래 기록 저장 실패: {e}")
+        return False
+
+def load_my_transactions(name):
+    """개인 입출금 내역 로드"""
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        try:
+            ws = sh.worksheet("transactions")
+            all_values = ws.get_all_values()
+            if len(all_values) < 2:
+                return []
+            headers = all_values[0]
+            return [dict(zip(headers, row)) for row in all_values[1:] if row[1] == name]
+        except:
+            return []
+    except:
+        return []
+
 def get_my_attendance_stats(my_name):
     """나의 기여도 및 보스 참여도 계산"""
     try:
@@ -581,7 +615,7 @@ if True:
                 st.markdown(f"<div class='section-title'>👤 현재 <span style='color:#38bdf8;'>{current_user}</span> 님의 정보</div>", unsafe_allow_html=True)
                 btn1, btn2, btn3 = st.columns(3)
                 with btn1:
-                    if st.button("✏️ 닉네임", use_container_width=True):
+                    if st.button("✏️ 닉네임 변경", use_container_width=True):
                         st.session_state.show_nick_editor = not st.session_state.get("show_nick_editor", False)
                 with btn2:
                     if st.button("🚪 로그아웃", use_container_width=True):
@@ -633,12 +667,35 @@ if True:
             with c1:
                 st.markdown("<span style='font-size:13px;'>예상 분배금</span>", unsafe_allow_html=True)
                 st.markdown(f"<div class='stat-val blue-txt'>{member_info['gold']:,} 💎</div>", unsafe_allow_html=True)
-                st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
-                if st.button("💸 출금 신청", use_container_width=True):
-                    st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
-                    save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+                tw1, tw2 = st.columns(2)
+                with tw1:
+                    st.markdown("<div class='stButton-withdraw'>", unsafe_allow_html=True)
+                    if st.button("💸 출금 신청", use_container_width=True):
+                        prev_gold = st.session_state.db_data["guildmembers"][current_user].get("gold", 0)
+                        st.session_state.db_data["guildmembers"][current_user]["gold"] = 0
+                        save_member_to_sheet(current_user, st.session_state.db_data["guildmembers"][current_user])
+                        save_transaction(current_user, prev_gold, "출금", "출금 신청")
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
+                with tw2:
+                    if st.button("📒 내역", use_container_width=True):
+                        st.session_state.show_transactions = not st.session_state.get("show_transactions", False)
+                if st.session_state.get("show_transactions", False):
+                    txs = load_my_transactions(current_user)
+                    if not txs:
+                        st.caption("내역 없음")
+                    else:
+                        for tx in reversed(txs):
+                            color = "#4ade80" if tx.get("type") == "입금" else "#ef4444"
+                            sign = "+" if tx.get("type") == "입금" else "-"
+                            st.markdown(
+                                f"<div style='font-size:0.75rem;padding:3px 0;border-bottom:1px solid #1e293b;'>"
+                                f"<span style='color:#94a3b8;'>{tx.get('time','')[5:16]}</span> "
+                                f"<span style='color:{color};font-weight:700;'>{sign}{int(tx.get('amount',0)):,} 💎</span> "
+                                f"<span style='color:#64748b;'>{tx.get('memo','')}</span>"
+                                f"</div>",
+                                unsafe_allow_html=True
+                            )
             with c2:
                 my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
                 st.markdown("<span style='font-size:13px;'>참여도</span>", unsafe_allow_html=True)
