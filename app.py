@@ -239,6 +239,60 @@ def load_settlement_log():
     except:
         return []
 
+def get_my_attendance_stats(my_name):
+    """나의 기여도 및 보스 참여도 계산"""
+    try:
+        client = get_gspread_client()
+        sh = client.open_by_key(SHEET_ID)
+        ws = sh.worksheet("attendance_log")
+        all_values = ws.get_all_values()
+        if len(all_values) < 2:
+            return 0, 0, 0, 0
+        headers = all_values[0]
+        rows = all_values[1:]
+
+        # 전체 점수 합산
+        all_scores = {}
+        # 세션별 보스 점수 (진행된 보스 총점)
+        session_scores = {}  # session_time -> boss_score
+        # 내가 참여한 세션
+        my_sessions = set()
+
+        for row in rows:
+            d = dict(zip(headers, row))
+            name = d.get("name", "")
+            session = d.get("session_time", "")
+            try:
+                score = int(d.get("boss_score", 0))
+            except:
+                score = 0
+
+            # 전체 기여도용
+            if name:
+                all_scores[name] = all_scores.get(name, 0) + score
+
+            # 세션별 보스 점수 (중복 제거)
+            if session and session not in session_scores:
+                session_scores[session] = score
+
+            # 내 참여 세션
+            if name == my_name and session:
+                my_sessions.add(session)
+
+        # 나의 기여도
+        total_all = sum(all_scores.values())
+        my_score = all_scores.get(my_name, 0)
+        my_contribution = round(my_score / total_all * 100, 1) if total_all > 0 else 0
+
+        # 보스 참여도
+        total_boss_score = sum(session_scores.values())
+        my_boss_score = sum(v for k, v in session_scores.items() if k in my_sessions)
+        my_attend_rate = round(my_boss_score / total_boss_score * 100, 1) if total_boss_score > 0 else 0
+
+        return my_contribution, my_attend_rate, my_score, total_all
+    except Exception as e:
+        return 0, 0, 0, 0
+
 def load_auction_from_sheet():
     try:
         df = load_sheet_data("auction_items")
@@ -586,11 +640,10 @@ if True:
                     st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
             with c2:
-                st.markdown("<span style='font-size:13px;'>현재 참여도</span>", unsafe_allow_html=True)
-                st.markdown("<div class='stat-val purple-txt'>94.5 %</div>", unsafe_allow_html=True)
-                st.markdown("<div class='stButton-attend'>", unsafe_allow_html=True)
-                if st.button("📅 출석 체크", use_container_width=True): st.success("확인 완료")
-                st.markdown("</div>", unsafe_allow_html=True)
+                my_contribution, my_attend_rate, my_score, total_all = get_my_attendance_stats(current_user)
+                st.markdown("<span style='font-size:13px;'>나의 기여도</span>", unsafe_allow_html=True)
+                st.markdown(f"<div class='stat-val purple-txt'>{my_contribution}%</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.75rem;color:#94a3b8;margin-top:-10px;margin-bottom:8px;'>보스참여도: {my_attend_rate}%</div>", unsafe_allow_html=True)
             with c3:
                 st.markdown("<span style='font-size:13px;'>현재 전투력</span>", unsafe_allow_html=True)
                 st.markdown(f"<div class='stat-val green-txt'>{member_info['power']:,}</div>", unsafe_allow_html=True)
